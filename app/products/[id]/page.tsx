@@ -8,6 +8,7 @@ import Breadcrumb from '@/components/Breadcrumb'
 import Link from 'next/link'
 import { getProductByHandle } from '@/lib/catalog'
 import { formatPrice } from '@/lib/site-data'
+import { SizerPanel } from '@/components/widget/AIWidget'
 
 const BRAND_COPPER = '#a17a58'
 const BRAND_INK = '#1a1410'
@@ -37,6 +38,7 @@ export default function ProductPage() {
 
     const [selectedSize, setSelectedSize] = useState('')
     const [mainImgIdx, setMainImgIdx] = useState(0)
+    const [showAISizer, setShowAISizer] = useState(false)
 
     // Sizer state — button-based steps
 
@@ -111,7 +113,7 @@ export default function ProductPage() {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', alignItems: 'center' }}>
                                     <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 500, color: BRAND_INK, textTransform: 'uppercase', letterSpacing: '1px' }}>Size</span>
                                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                        <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('openAsukaPanel', { detail: { tab: 'sizer' } }))}
+                                        <button type="button" onClick={() => setShowAISizer(!showAISizer)}
                                             style={{ background: 'none', border: 'none', color: BRAND_COPPER, fontFamily: 'var(--font-sans)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '3px' }}>
                                             🤖 AI Size Finder
                                         </button>
@@ -135,10 +137,20 @@ export default function ProductPage() {
                                         </button>
                                     ))}
                                 </div>
-                                <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('openAsukaPanel', { detail: { tab: 'sizer' } }))} className="flex items-center gap-2 text-[#a17a58] hover:text-[#1a1410] font-sans text-sm mb-6 pb-1 border-b border-[#a17a58]/30 hover:border-[#1a1410] transition-colors w-fit">
+                                <button type="button" onClick={() => setShowAISizer(!showAISizer)} className="flex items-center gap-2 text-[#a17a58] hover:text-[#1a1410] font-sans text-sm mb-6 pb-1 border-b border-[#a17a58]/30 hover:border-[#1a1410] transition-colors w-fit">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
                                     Find Your Perfect Fit with AI
                                 </button>
+
+                                {showAISizer && (
+                                    <div className="bg-[#fcf9f6] border border-[#e8e0d6] rounded-xl p-5 mb-8 shadow-sm">
+                                        <div className="flex justify-between items-center mb-4 pb-3 border-b border-[#e8e0d6]">
+                                            <h3 className="font-serif text-[#1a1410] text-lg">AI Size Consultant</h3>
+                                            <button type="button" onClick={() => setShowAISizer(false)} className="text-[#a17a58] hover:text-[#1a1410] transition-colors">✕</button>
+                                        </div>
+                                        <SizerPanel />
+                                    </div>
+                                )}
                             </div>
 
                             {/* CTA buttons */}
@@ -157,7 +169,10 @@ export default function ProductPage() {
                                 }}
                                     onMouseEnter={e => { e.currentTarget.style.background = BRAND_COPPER; e.currentTarget.style.color = 'white'; }}
                                     onMouseLeave={e => { e.currentTarget.style.background = 'white'; e.currentTarget.style.color = BRAND_INK; }}>
-                                    ✨ MAKE IT YOURSELF
+                                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                                        MAKE IT YOURSELF
+                                    </span>
                                 </button>
                                 <a href={`https://wa.me/919063356542?text=Hi, I'm interested in ${encodeURIComponent(product.title)} (${formatPrice(product.price)})`}
                                     target="_blank" rel="noopener noreferrer"
@@ -205,7 +220,7 @@ export default function ProductPage() {
                             if (!p) return null
                             return (
                                 <Link href={`/products/${p.handle}`} key={p.handle} className="group block no-underline">
-                                    <div className="aspect-[3/4] overflow-hidden mb-4 bg-[#f5ede3] product-img-wrap">
+                                    <div className="aspect-[2/3] overflow-hidden mb-4 bg-[#f5ede3] product-img-wrap rounded-sm shadow-sm">
                                         <img src={p.first_image} alt={p.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                                     </div>
                                     <div className="text-center">

@@ -74,7 +74,13 @@ const BODY_SHAPES = [
   { id: 'broad_shoulders', label: 'Broad Shoulders', icon: '🏋' },
 ]
 
-const SKIN_TONES = ['#FDDBB4', '#F5C289', '#D4935F', '#B5703B', '#8D4F2D', '#5C2E0E']
+const SKIN_TONE_SCALES = [
+  { id: 'light', color: '#F8E2CF', label: 'Light' },
+  { id: 'wheatish', color: '#E8C19D', label: 'Wheatish' },
+  { id: 'medium', color: '#D4A373', label: 'Medium' },
+  { id: 'tan', color: '#B07D4F', label: 'Tan' },
+  { id: 'dark', color: '#6B4226', label: 'Deep' },
+]
 
 const BRAND = '#a17a58'
 
@@ -120,6 +126,7 @@ export default function SizingPage() {
   const [height, setHeight] = useState('')
   const [weight, setWeight] = useState('')
   const [age, setAge] = useState('')
+  const [skinTone, setSkinTone] = useState('medium')
   const [fitPref, setFitPref] = useState('')
   const [bodyShape, setBodyShape] = useState('')
   const [issues, setIssues] = useState<string[]>([])
@@ -149,7 +156,7 @@ export default function SizingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mode: 'brand_size', brand, product_type: productType, size: brandSize, height, weight, age,
-          fit_preference: fitPref, body_shape: bodyShape, issues, free_text: freeText
+          fit_preference: fitPref, body_shape: bodyShape, issues, free_text: freeText, skin_tone: skinTone
         })
       })
       const data = await res.json()
@@ -290,6 +297,23 @@ export default function SizingPage() {
                     <Input placeholder="Height (e.g. 5'10)" value={height} onChange={setHeight} />
                     <Input placeholder="Weight (e.g. 78 kg)" value={weight} onChange={setWeight} />
                     <Input placeholder="Age range" value={age} onChange={setAge} />
+                  </div>
+                </Section>
+
+                <Section title="Skin Tone">
+                  <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                    {SKIN_TONE_SCALES.map(s => (
+                      <button type="button" key={s.id} onClick={() => setSkinTone(s.id)} style={{
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'none', border: 'none'
+                      }}>
+                        <div style={{
+                          width: '44px', height: '44px', borderRadius: '50%', background: s.color,
+                          border: skinTone === s.id ? `3px solid ${BRAND}` : '1px solid rgba(0,0,0,0.1)',
+                          boxShadow: skinTone === s.id ? '0 0 0 2px white inset' : 'none', transition: 'all 0.2s'
+                        }} />
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: skinTone === s.id ? BRAND : '#999', textTransform: 'uppercase' }}>{s.label}</span>
+                      </button>
+                    ))}
                   </div>
                 </Section>
 

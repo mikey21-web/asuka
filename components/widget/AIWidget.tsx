@@ -64,13 +64,14 @@ function GarmentPreview({ summary, prompt }: { summary: string | null, prompt?: 
   const imgUrl = genPrompt ? `https://image.pollinations.ai/prompt/${encodeURIComponent(genPrompt)}?width=600&height=800&nologo=true&seed=${summary?.length || 42}` : null
 
   return (
-    <div style={{ width: '100%', aspectRatio: '3/4', maxHeight: '280px', border: '1px solid #d4c4b0', marginBottom: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', background: summary ? bg : '#f5f0e8', transition: 'background 0.5s ease', borderRadius: '8px' }}>
+    <div style={{ width: '100%', aspectRatio: '2/3', maxHeight: '280px', border: '1px solid #d4c4b0', marginBottom: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', background: summary ? bg : '#FAF6F1', transition: 'background 0.5s ease', borderRadius: '8px' }}>
       {imgUrl ? (
         <>
           <img
             src={imgUrl}
-            alt="Design Preview"
-            style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: imgLoaded ? 1 : 0, transition: 'opacity 0.5s' }}
+            alt="AI Perspective"
+            className="w-full h-full object-cover transition-opacity duration-1000"
+            style={{ opacity: imgLoaded ? 1 : 0 }}
             onLoad={() => setImgLoaded(true)}
           />
           {!imgLoaded && (
@@ -124,7 +125,7 @@ function ProductCard({ p: productObj, name }: { p?: any; name?: string }) {
 /* ══════════════════════════
    SIZER PANEL
 ══════════════════════════ */
-function SizerPanel() {
+export function SizerPanel() {
   const [step, setStep] = useState(1)
   const [pt, setPt] = useState('kurta')
   const [brand, setBrand] = useState('')
@@ -208,14 +209,46 @@ function SizerPanel() {
 
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '2.5px', color: '#a17a58', textTransform: 'uppercase', marginBottom: '10px' }}>Upload Photos (Optional)</div>
           <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-            <button type="button" onClick={() => alert('Photo upload simulation: In a real environment, this would open a camera/file picker to capture front/side profile.')} style={{ flex: 1, padding: '12px', border: '1px dashed #d4c4b0', background: '#fff', color: '#999', fontSize: '10px', borderRadius: '4px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
-              <span>Front View</span>
-            </button>
-            <button type="button" onClick={() => alert('Photo upload simulation')} style={{ flex: 1, padding: '12px', border: '1px dashed #d4c4b0', background: '#fff', color: '#999', fontSize: '10px', borderRadius: '4px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
-              <span>Side View</span>
-            </button>
+            <div style={{ flex: 1 }}>
+              <input
+                type="file"
+                id="front-view"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) alert(`Front View Uploaded: ${file.name}`);
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => document.getElementById('front-view')?.click()}
+                style={{ width: '100%', padding: '12px', border: '1px dashed #d4c4b0', background: '#fff', color: '#999', fontSize: '10px', borderRadius: '4px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
+                <span>Front View</span>
+              </button>
+            </div>
+            <div style={{ flex: 1 }}>
+              <input
+                type="file"
+                id="side-view"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) alert(`Side View Uploaded: ${file.name}`);
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => document.getElementById('side-view')?.click()}
+                style={{ width: '100%', padding: '12px', border: '1px dashed #d4c4b0', background: '#fff', color: '#999', fontSize: '10px', borderRadius: '4px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
+                <span>Side View</span>
+              </button>
+            </div>
           </div>
 
           <div style={{ display: 'flex', gap: '10px' }}>
@@ -291,8 +324,8 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
   useEffect(() => {
     if (msgs.length === 0) {
       const g = persona === 'style'
-        ? `Namaste! ✨ I'm Ayaan, your personal stylist. What occasion can I help you with today?`
-        : `Namaste! 👋 I'm your Asuka Atelier assistant. I can help you design a one-of-a-kind custom outfit. What vibe do you have in mind?`
+        ? "Namaste! I'm Ayaan, your personal stylist. What occasion can I help you with today?"
+        : "Namaste! I'm your Asuka Atelier assistant. I can help you design a one-of-a-kind custom outfit. What vibe do you have in mind?"
       setMsgs([{ role: 'assistant', content: g }])
     }
   }, [persona, msgs.length])
@@ -314,7 +347,7 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
         setLoading(false)
         inputRef.current?.focus()
       }
-    }, 30) // 30ms per word = fast but visible
+    }, 20) // 20ms per word = snappier feel
     return timer
   }, [])
 
@@ -353,14 +386,11 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
 
   const chatH = showPreview ? (summary ? 160 : 220) : (systemHeight || 300)
 
-  const inputStyle = { width: '100%', background: '#fff', border: '1px solid #d4c4b0', color: '#1a1410', fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 300 as const, padding: '10px 13px', outline: 'none', marginBottom: '10px', borderRadius: '4px' }
-
-
   return (
-    <>
-      {showPreview && <GarmentPreview summary={summary} prompt={imgPrompt} />}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {showPreview && <div style={{ padding: '15px 15px 0' }}><GarmentPreview summary={summary} prompt={imgPrompt} /></div>}
       {showPreview && summary && (
-        <div style={{ marginBottom: '12px', padding: '10px 12px', background: '#f5ede3', border: '1px solid #d4c4b0', borderRadius: '6px' }}>
+        <div style={{ flexShrink: 0, padding: '10px 12px', background: '#f5ede3', border: '1px solid #d4c4b0', borderRadius: '6px', margin: '0 15px 10px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '2px', color: '#a17a58', textTransform: 'uppercase' }}>Design Preview</div>
             <button type="button" onClick={() => { /* Toggle Customize UI */ }} style={{ background: 'none', border: '1px solid #a17a58', color: '#a17a58', fontSize: '7px', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', padding: '3px 6px', borderRadius: '3px', cursor: 'pointer' }}>Customize ▿</button>
@@ -370,7 +400,7 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
         </div>
       )}
       {/* Quick prompts */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '12px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', flexShrink: 0, padding: '10px 15px' }}>
         {quickPrompts.map(q => (
           <button type="button" key={q} onClick={() => send(q)} style={{ padding: '5px 10px', border: '1px solid #d4c4b0', fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '1px', color: '#a17a58', cursor: 'pointer', background: 'none', textTransform: 'uppercase', transition: 'all 0.2s', borderRadius: '3px' }} onMouseEnter={e => { (e.target as HTMLButtonElement).style.borderColor = '#a17a58'; (e.target as HTMLButtonElement).style.color = '#fff'; (e.target as HTMLButtonElement).style.background = '#a17a58'; }} onMouseLeave={e => { (e.target as HTMLButtonElement).style.borderColor = '#d4c4b0'; (e.target as HTMLButtonElement).style.color = '#a17a58'; (e.target as HTMLButtonElement).style.background = 'none'; }}>
             {q}
@@ -378,26 +408,29 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
         ))}
       </div>
       {/* Messages */}
-      <div className="chat-scroll" style={{ height: `${chatH}px`, overflowY: 'auto', marginBottom: '10px' }}>
-        {msgs.map((m, i) => (
-          <div key={i} className="animate-fadeUp" style={{ marginBottom: '14px', display: 'flex', flexDirection: 'column', alignItems: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', letterSpacing: '2px', textTransform: 'uppercase', color: m.role === 'user' ? '#a17a58' : '#999', marginBottom: '4px' }}>{m.role === 'assistant' ? (persona === 'style' ? 'Ayaan · Asuka' : 'Asuka Atelier') : 'You'}</span>
-            <div style={{ maxWidth: '85%', padding: '10px 14px', fontSize: '12px', lineHeight: 1.7, color: '#1a1410', background: m.role === 'user' ? '#f5ede3' : '#faf7f2', border: m.role === 'user' ? '1px solid #d4c4b0' : '1px solid #e8e0d6', borderRadius: '6px' }}>
-              {m.content.split('\n').map((line, j) => (
-                <span key={j}><Bold text={line} />{j < m.content.split('\n').length - 1 && <br />}</span>
-              ))}
+      <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto', padding: '15px' }}>
+        {msgs.map((m, i) => {
+          const cleanContent = m.content.replace(/[✨👋✦]/g, '').trim()
+          return (
+            <div key={i} className="animate-fadeUp" style={{ marginBottom: '14px', display: 'flex', flexDirection: 'column', alignItems: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', letterSpacing: '2px', textTransform: 'uppercase', color: m.role === 'user' ? '#a17a58' : '#999', marginBottom: '4px' }}>{m.role === 'assistant' ? (persona === 'style' ? 'Ayaan · Asuka' : 'Asuka Atelier') : 'You'}</span>
+              <div style={{ maxWidth: '85%', padding: '10px 14px', fontSize: '12px', lineHeight: 1.7, color: '#1a1410', background: m.role === 'user' ? '#f5ede3' : '#faf7f2', border: m.role === 'user' ? '1px solid #d4c4b0' : '1px solid #e8e0d6', borderRadius: '6px' }}>
+                {cleanContent.split('\n').map((line, j) => (
+                  <span key={j}><Bold text={line} />{j < cleanContent.split('\n').length - 1 && <br />}</span>
+                ))}
 
-              {/* Render Product Cards if any */}
-              {m.products && m.products.length > 0 && (
-                <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {m.products.map((p, idx) => (
-                    <ProductCard key={idx} p={typeof p === 'object' ? p : undefined} name={typeof p === 'string' ? p : undefined} />
-                  ))}
-                </div>
-              )}
+                {/* Render Product Cards if any */}
+                {m.products && m.products.length > 0 && (
+                  <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {m.products.map((p, idx) => (
+                      <ProductCard key={idx} p={typeof p === 'object' ? p : undefined} name={typeof p === 'string' ? p : undefined} />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
         {loading && !streamingText && (
           <div style={{ marginBottom: '14px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', letterSpacing: '2px', textTransform: 'uppercase', color: '#999', marginBottom: '4px' }}>{persona === 'style' ? 'Ayaan · Asuka' : 'Asuka Atelier'}</span>
@@ -418,8 +451,8 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
         )}
         <div ref={bottomRef} />
       </div>
-      {/* Input */}
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', background: '#fff', padding: '12px', borderTop: '1px solid #e8e0d6' }}>
+      {/* Input area - anchored to absolute bottom */}
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', background: '#fff', padding: '12px 15px', borderTop: '1px solid #e8e0d6', flexShrink: 0, width: '100%', marginBottom: '-1px', borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}>
         <input
           ref={inputRef}
           value={input}
@@ -430,17 +463,17 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
           style={{ flex: 1, background: 'none', border: 'none', color: '#1a1410', fontFamily: 'var(--font-sans)', fontSize: '14px', fontWeight: 300, padding: '4px 0', outline: 'none' }}
         />
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <VoiceInput onTranscription={(txt) => send(txt)} isChatLoading={loading} />
+          <VoiceInput onTranscription={send} isChatLoading={loading} />
           <button
             onClick={() => send(input)}
             disabled={loading || !input.trim()}
-            style={{ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a1410', color: '#fff', border: 'none', borderRadius: '50%', cursor: (loading || !input.trim()) ? 'not-allowed' : 'pointer', opacity: (loading || !input.trim()) ? 0.3 : 1, transition: 'all 0.2s' }}
+            style={{ width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a1410', color: '#fff', border: 'none', borderRadius: '50%', cursor: (loading || !input.trim()) ? 'not-allowed' : 'pointer', opacity: (loading || !input.trim()) ? 0.3 : 1, transition: 'all 0.2s' }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" /></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" /></svg>
           </button>
         </div>
       </div>
-    </>
+    </div>
   )
 }
 
@@ -448,57 +481,49 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
    MAIN WIDGET
 ══════════════════════════ */
 export default function AIWidget({ initialTab = 'style', isFloating = false }: { initialTab?: Tab, isFloating?: boolean }) {
-  const [tab, setTab] = useState<Tab>(initialTab)
   const [open, setOpen] = useState(false)
+  const [persona, setPersona] = useState<Tab>(initialTab)
 
   useEffect(() => {
     if (!isFloating) return
-    const handler = (e: Event) => {
-      const customEvent = e as CustomEvent<{ tab?: Tab }>
-      if (customEvent.detail?.tab) setTab(customEvent.detail.tab)
+    const handler = (e: any) => {
       setOpen(true)
+      if (e.detail?.tab) setPersona(e.detail.tab)
     }
     window.addEventListener('openAsukaPanel', handler)
     return () => window.removeEventListener('openAsukaPanel', handler)
   }, [isFloating])
 
-  const tabs: { id: Tab; label: string }[] = [
-    { id: 'sizer', label: 'AI Sizer' },
-    { id: 'style', label: 'Style Me' },
-    { id: 'make', label: 'Make It' },
-  ]
-
   const widgetContent = (
-    <div className={`w-full flex flex-col bg-[#fdf9f5] overflow-hidden ${isFloating ? 'h-full sm:rounded-2xl' : 'border border-[#d4c4b0] shadow-sm rounded-xl min-h-[500px]'}`}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 bg-[#f5ede3] border-b border-[#d4c4b0] flex-shrink-0">
-        <div style={{ display: 'flex', gap: '2px', overflowX: 'auto', paddingBottom: '2px' }}>
-          {tabs.map(t => (
-            <button type="button" key={t.id} onClick={() => setTab(t.id)} style={{ padding: '7px 14px', background: tab === t.id ? '#a17a58' : 'none', border: tab === t.id ? '1px solid #a17a58' : '1px solid #d4c4b0', color: tab === t.id ? '#fff' : '#a17a58', fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', cursor: 'pointer', borderRadius: '4px', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
-              {t.label}
-            </button>
-          ))}
-        </div>
+    <div className={`w-full flex flex-col bg-[#FAF6F1] overflow-hidden ${isFloating ? 'h-full sm:rounded-2xl' : 'border border-[#d4c4b0] shadow-sm rounded-xl min-h-[500px]'}`}>
+      {/* Tab Switcher / Header */}
+      <div className="flex items-center bg-[#f5ede3] border-b border-[#d4c4b0] flex-shrink-0">
+        {(['style', 'make', 'sizer'] as Tab[]).map(t => (
+          <button
+            key={t}
+            onClick={() => setPersona(t)}
+            className={`flex-1 py-3 sm:py-4 px-2 text-[8px] sm:text-[9px] font-mono tracking-[1.5px] uppercase transition-all border-b-2 ${persona === t ? 'border-[#a17a58] text-[#a17a58] font-bold bg-white/30' : 'border-transparent text-[#999] hover:text-[#a17a58]'}`}
+          >
+            {t === 'style' ? 'AI Stylist' : t === 'make' ? 'Atelier' : 'Fit Finder'}
+          </button>
+        ))}
       </div>
+
       {/* Body */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-5 relative">
-        {tab === 'sizer' && <SizerPanel />}
-        {tab === 'style' && (
+      <div className="flex-1 flex flex-col overflow-hidden relative" style={{ minHeight: 0 }}>
+        {persona === 'sizer' ? (
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6"><SizerPanel /></div>
+        ) : (
           <ChatPanel
-            key="style"
-            endpoint="/api/stylist"
-            persona="style"
-            quickPrompts={['Wedding guest', 'Groom · sangeet', 'Office ethnic', 'Beach wedding', 'Eid look', 'Diwali party']}
-            systemHeight={isFloating ? 400 : 320}
-          />
-        )}
-        {tab === 'make' && (
-          <ChatPanel
-            key="make"
-            endpoint="/api/design"
-            persona="design"
-            quickPrompts={['Wedding groom', 'Sangeet night', 'Casual fusion', 'Festive kurta', 'Corporate look']}
-            showPreview={true}
+            key={persona}
+            endpoint={persona === 'style' ? '/api/stylist' : '/api/miy-chat'}
+            persona={persona}
+            showPreview={persona === 'make'}
+            quickPrompts={persona === 'style'
+              ? ['Wedding guest', 'Groom · sangeet', 'Office ethnic', 'Beach wedding', 'Eid look', 'Diwali party']
+              : ['Luxury Bandhgala', 'Modern Sherwani', 'Silk Kurta Set', 'Velvet Tuxedo', 'Asymmetric Indo', 'Embroidered Jodhpuri']
+            }
+            systemHeight={isFloating ? (persona === 'make' ? 180 : 240) : 300}
           />
         )}
       </div>
@@ -514,14 +539,14 @@ export default function AIWidget({ initialTab = 'style', isFloating = false }: {
         className={`animate-fadeUp fixed bottom-5 right-4 sm:bottom-7 sm:right-7 z-[9998] w-[48px] h-[48px] sm:w-[52px] sm:h-[52px] bg-[#1a1410] text-white rounded-full flex items-center justify-center shadow-[0_4px_14px_rgba(26,20,16,0.25)] cursor-pointer hover:scale-110 transition-transform duration-300 ${open ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
         aria-label="Open AI Assistant"
       >
-        <span style={{ fontSize: '20px' }}>✨</span>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
       </button>
 
       {open && (
         <>
           {/* Mobile Overlay (Only needed if not full screen, kept for safety) */}
           <div className="fixed inset-0 bg-black/40 z-[9998] sm:hidden animate-fadeIn" onClick={() => setOpen(false)} />
-          <div className="fixed inset-0 sm:inset-auto sm:bottom-24 sm:right-7 z-[9999] w-full sm:w-[400px] h-[100svh] sm:h-[650px] flex flex-col animate-panelOpen shadow-2xl sm:rounded-2xl overflow-hidden sm:border border-[#e0d5c8] bg-white">
+          <div className="fixed inset-0 sm:inset-auto sm:bottom-24 sm:right-7 z-[9999] w-full sm:w-[380px] h-[100svh] sm:h-[380px] sm:max-h-[calc(100vh-120px)] flex flex-col animate-panelOpen shadow-2xl sm:rounded-2xl overflow-hidden sm:border border-[#e0d5c8] bg-white">
             <button onClick={() => setOpen(false)} className="absolute top-2 right-2 sm:top-4 sm:right-4 z-[100] w-8 h-8 flex items-center justify-center bg-[#f5ede3] rounded-full text-[#a17a58] hover:bg-[#a17a58] hover:text-white transition-colors">✕</button>
             {widgetContent}
           </div>

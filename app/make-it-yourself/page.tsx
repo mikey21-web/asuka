@@ -147,7 +147,7 @@ Please connect me with a Master Tailor to finalize sizing and production.`
                                     <div>
                                         <label style={LabelStyle}>Budget Range</label>
                                         <select style={InputStyle} value={budget} onChange={e => setBudget(e.target.value)}>
-                                            {['₹25k - ₹40k', '₹40k - ₹80k', '₹80k - ₹1.5L', '₹1.5L+'].map(o => <option key={o}>{o}</option>)}
+                                            {['₹30,000 - ₹50,000', '₹50,000 - ₹1,00,000', '₹1,00,000 - ₹2,50,000', '₹2,50,000+'].map(o => <option key={o}>{o}</option>)}
                                         </select>
                                     </div>
                                 </div>
@@ -201,11 +201,28 @@ Please connect me with a Master Tailor to finalize sizing and production.`
                                         <label style={LabelStyle}>Height / Weight (Optional)</label>
                                         <input style={InputStyle} value={hw} onChange={e => setHw(e.target.value)} placeholder="e.g. 5'11 / 78kg" />
                                     </div>
-                                    <div>
+                                    <div style={{ gridColumn: 'span 2' }}>
                                         <label style={LabelStyle}>Skin Tone</label>
-                                        <select style={InputStyle} value={skin} onChange={e => setSkin(e.target.value)}>
-                                            {['Fair/Light', 'Medium/Wheatish', 'Olive/Tan', 'Deep/Dark'].map(o => <option key={o}>{o}</option>)}
-                                        </select>
+                                        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginTop: '10px' }}>
+                                            {[
+                                                { id: 'Fair/Light', color: '#F8E2CF' },
+                                                { id: 'Medium/Wheatish', color: '#E8C19D' },
+                                                { id: 'Olive/Tan', color: '#B07D4F' },
+                                                { id: 'Deep/Dark', color: '#6B4226' }
+                                            ].map(s => (
+                                                <button type="button" key={s.id} onClick={() => setSkin(s.id)} style={{
+                                                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'none', border: 'none'
+                                                }}>
+                                                    <div style={{
+                                                        width: '40px', height: '40px', borderRadius: '50%', background: s.color,
+                                                        border: skin === s.id ? `2px solid ${BRAND_COPPER}` : '1px solid #ddd',
+                                                        outline: skin === s.id ? '2px solid white' : 'none', outlineOffset: '-4px',
+                                                        transition: 'all 0.2s'
+                                                    }} />
+                                                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: skin === s.id ? BRAND_INK : '#888' }}>{s.id.split('/')[0]}</span>
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
 

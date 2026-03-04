@@ -37,7 +37,7 @@ function ProductRow({
           {products.map(p => {
             return (
               <Link key={p.id} href={`/products/${p.handle}`} style={{ flex: '0 0 280px', scrollSnapAlign: 'start', textDecoration: 'none', display: 'block' }}>
-                <div className="product-img-wrap" style={{ position: 'relative', aspectRatio: '2/3', overflow: 'hidden', marginBottom: '14px', background: '#f5f0e8' }}>
+                <div className="product-img-wrap" style={{ position: 'relative', aspectRatio: '2/3', overflow: 'hidden', marginBottom: '14px', background: '#f5f0e8', borderRadius: '4px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
                   {p.first_image && p.first_image !== 'NO IMAGE' && (
                     <img src={p.first_image} alt={p.title}
                       style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s ease' }}

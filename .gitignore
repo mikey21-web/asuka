@@ -9,3 +9,5 @@ out/
 # Data and Scripts
 *.html
 *.py
+
+.vercel

@@ -6,6 +6,7 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { HERO_ETHNIC, HERO_WESTERN, STORES, BRAND_SLIDER_IMAGES, formatPrice } from '@/lib/site-data'
 import { getCelebrityProducts, type CatalogProduct } from '@/lib/catalog'
+import DigitalStylistSection from '@/components/sections/DigitalStylist'
 
 /* ── Preload celebrity products at module level ── */
 export default function Home() {
@@ -19,34 +20,44 @@ export default function Home() {
 
         {/* ═══ 1. HERO — 95vh promo grid (Ethnic + Western) ═══ */}
         <section className="relative min-h-[95vh] grid grid-cols-1 md:grid-cols-2">
+          <div className="absolute inset-x-0 bottom-[15vh] z-20 flex flex-col items-center gap-6 animate-fadeUp delay-300">
+            <div className="flex flex-wrap justify-center gap-4 px-4">
+              <Link href="/make-it-yourself" className="px-8 py-3 bg-white text-[#1a1410] font-mono text-[11px] tracking-[3px] uppercase hover:bg-[#a17a58] hover:text-white transition-all border border-white">
+                Make It Yourself
+              </Link>
+              <Link href="/sizing" className="px-8 py-3 bg-transparent text-white font-mono text-[11px] tracking-[3px] uppercase hover:bg-white hover:text-[#1a1410] transition-all border border-white">
+                AI Sizer Finder
+              </Link>
+            </div>
+          </div>
+          {/* SEO H1 Overlay */}
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none px-4 text-center">
+            <h1 className="font-serif text-white/90 text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-light tracking-[0.15em] uppercase drop-shadow-lg animate-fadeIn">
+              Asuka <span className="italic block mt-2 text-2xl sm:text-4xl md:text-5xl opacity-80 tracking-widest">Couture</span>
+            </h1>
+          </div>
+
           {/* Ethnic half */}
           <Link href="/ethnic-home" onMouseEnter={() => setHeroTab('ethnic')}
             className="relative overflow-hidden block h-[50vh] md:h-auto">
-            <Image src={HERO_ETHNIC} alt="Ethnic Wear" fill priority sizes="(max-width: 768px) 100vw, 50vw"
-              className={`object-cover absolute inset-0 transition-all duration-500 ${heroTab === 'ethnic' ? 'scale-[1.02]' : 'scale-100'}`} />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+            <Image src={HERO_ETHNIC} alt="Luxury Ethnic Wear for Men" fill priority sizes="(max-width: 768px) 100vw, 50vw"
+              className={`object-cover absolute inset-0 transition-all duration-500 ${heroTab === 'ethnic' ? 'scale-[1.05]' : 'scale-100'}`} />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
           </Link>
           {/* Western half */}
           <Link href="/western-home" onMouseEnter={() => setHeroTab('western')}
             className="relative overflow-hidden block h-[50vh] md:h-auto">
-            <Image src={HERO_WESTERN} alt="Western Wear" fill priority sizes="(max-width: 768px) 100vw, 50vw"
-              className={`object-cover absolute inset-0 transition-all duration-500 ${heroTab === 'western' ? 'scale-[1.02]' : 'scale-100'}`} />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+            <Image src={HERO_WESTERN} alt="Premium Western Wear for Men" fill priority sizes="(max-width: 768px) 100vw, 50vw"
+              className={`object-cover absolute inset-0 transition-all duration-500 ${heroTab === 'western' ? 'scale-[1.05]' : 'scale-100'}`} />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
           </Link>
 
-          {/* Centered MIY Overlay Button */}
-          <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
-            <button
-              onClick={() => window.dispatchEvent(new CustomEvent('openAsukaPanel', { detail: { tab: 'make' } }))}
-              className="pointer-events-auto bg-[#1a1410]/80 backdrop-blur-md text-white border border-[#a17a58] px-8 py-4 uppercase tracking-[4px] font-mono text-xs sm:text-sm hover:bg-[#a17a58] transition-all duration-300 shadow-2xl flex items-center gap-2 group"
-            >
-              <span className="group-hover:rotate-12 transition-transform duration-300">✨</span>
-              Make It Yourself
-            </button>
-          </div>
         </section>
 
-        {/* ═══ 2. SPOTTED IN ASUKA — Celebrity grid ═══ */}
+        {/* ═══ 2. DIGITAL STYLIST SECTION ═══ */}
+        <DigitalStylistSection />
+
+        {/* ═══ 3. SPOTTED IN ASUKA — Celebrity grid ═══ */}
         <section style={{ padding: '60px 0 40px' }}>
           <div className="page-width" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px' }}>
             <div className="section-header" style={{ textAlign: 'center', marginBottom: '40px' }}>
@@ -124,25 +135,23 @@ function ProductCard({ product }: { product: CatalogProduct }) {
   return (
     <Link href={`/products/${product.handle}`} style={{ textDecoration: 'none', display: 'block' }}
       onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-      <div className="product-img-wrap" style={{ position: 'relative', overflow: 'hidden', marginBottom: '12px', background: '#f5f0e8' }}>
-        <div style={{ paddingBottom: '125%', position: 'relative' }}>
-          {product.first_image && product.first_image !== 'NO IMAGE' && (
-            <Image src={product.first_image} alt={product.title} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              style={{ objectFit: 'cover', transition: 'all 0.5s ease', transform: hovered ? 'scale(1.04)' : 'scale(1)' }} />
-          )}
-          {/* Secondary image on hover */}
-          {product.all_images[1] && (
-            <Image src={product.all_images[1]} alt="" fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              style={{ objectFit: 'cover', opacity: hovered ? 1 : 0, transition: 'all 0.5s ease' }} />
-          )}
-          {/* SHOP NOW button on hover */}
-          <button type="button" style={{
-            position: 'absolute', bottom: '16px', left: '50%', transform: 'translateX(-50%)',
-            padding: '10px 24px', background: 'white', border: 'none',
-            fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 500, letterSpacing: '2px',
-            textTransform: 'uppercase', cursor: 'pointer', opacity: hovered ? 1 : 0, transition: 'all 0.5s ease',
-          }}>SHOP NOW</button>
-        </div>
+      <div className="product-img-wrap" style={{ position: 'relative', overflow: 'hidden', marginBottom: '12px', background: '#f5f0e8', aspectRatio: '2/3' }}>
+        {product.first_image && product.first_image !== 'NO IMAGE' && (
+          <Image src={product.first_image} alt={product.title} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            style={{ objectFit: 'cover', objectPosition: 'top', transition: 'all 0.5s ease', transform: hovered ? 'scale(1.04)' : 'scale(1)' }} />
+        )}
+        {/* Secondary image on hover */}
+        {product.all_images[1] && (
+          <Image src={product.all_images[1]} alt="" fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            style={{ objectFit: 'cover', objectPosition: 'top', opacity: hovered ? 1 : 0, transition: 'all 0.5s ease' }} />
+        )}
+        {/* SHOP NOW button on hover */}
+        <button type="button" style={{
+          position: 'absolute', bottom: '16px', left: '50%', transform: 'translateX(-50%)',
+          padding: '10px 24px', background: 'white', border: 'none',
+          fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 500, letterSpacing: '2px',
+          textTransform: 'uppercase', cursor: 'pointer', opacity: hovered ? 1 : 0, transition: 'all 0.5s ease',
+        }}>SHOP NOW</button>
       </div>
       <div style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 400, color: '#1a1410', lineHeight: 1.5, marginBottom: '4px' }}>{product.title}</div>
       <div style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 600, color: '#1a1410' }}>{formatPrice(product.price)}</div>
