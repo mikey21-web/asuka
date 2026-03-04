@@ -52,59 +52,55 @@ export default function Header() {
 
         {/* Floating nav — transparent, overlays the hero image */}
         <header
-          className={`${isScrolled ? 'fixed top-0 bg-[#1a1410]/95 backdrop-blur-md h-16' : 'absolute top-[39px] bg-transparent h-24'} left-0 right-0 z-[1001] transition-all duration-500 ease-in-out border-b border-white/10`}
+          className={`${isScrolled ? 'fixed top-0 bg-[#1a1410]/95 backdrop-blur-md h-16 shadow-lg shadow-black/20' : 'relative bg-transparent h-28'} left-0 right-0 z-[1001] transition-all duration-500 ease-in-out border-b border-white/5`}
         >
-          <div className="grid grid-cols-3 items-center px-4 md:px-10 h-full max-w-[1800px] mx-auto w-full">
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center px-6 md:px-12 h-full max-w-[1800px] mx-auto w-full">
 
-            {/* LEFT: Primary nav (Desktop only) */}
-            <div className="hidden md:flex items-center gap-6 lg:gap-8">
-              {['ETHNIC', 'WESTERN', 'CELEBRITY STYLES'].map(item => (
-                <Link key={item}
-                  href={item === 'ETHNIC' ? '/ethnic-home' : item === 'WESTERN' ? '/western-home' : '/collections/celebrity-styles'}
-                  className="text-white no-underline text-[10px] font-mono tracking-[2px] font-medium opacity-80 hover:opacity-100 transition-opacity whitespace-nowrap"
-                >
-                  {item}
-                </Link>
-              ))}
-            </div>
-
-            {/* MOBILE ONLY: Hamburger (Left side of grid) */}
-            <div className="flex md:hidden justify-start">
-              <button onClick={() => setIsMenuOpen(true)} className="bg-none border-none text-white p-2">
+            {/* LEFT: Nav */}
+            <div className="flex items-center gap-4 lg:gap-8">
+              {/* Hamburger (Tablet/Mobile) */}
+              <button onClick={() => setIsMenuOpen(true)} className="md:hidden lg:hidden bg-transparent border-none text-white p-2">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
               </button>
+
+              {/* Desktop Links */}
+              <div className="hidden md:flex items-center gap-4 lg:gap-8 overflow-hidden">
+                <Link href="/ethnic-home" className="text-white no-underline text-[9px] font-mono tracking-[1.5px] font-medium uppercase hover:text-[#a17a58] transition-colors whitespace-nowrap">ETHNIC</Link>
+                <Link href="/western-home" className="text-white no-underline text-[9px] font-mono tracking-[1.5px] font-medium uppercase hover:text-[#a17a58] transition-colors whitespace-nowrap">WESTERN</Link>
+                <Link href="/collections/celebrity-styles" className="hidden lg:block text-white no-underline text-[9px] font-mono tracking-[1.5px] font-medium uppercase hover:text-[#a17a58] transition-colors whitespace-nowrap">CELEBRITY STYLES</Link>
+              </div>
             </div>
 
-            {/* CENTER: ASUKA logo (Stacked) */}
-            <div className="flex justify-center">
+            {/* CENTER: Stacked Logo */}
+            <div className="flex justify-center px-4">
               <Link href="/" className="flex flex-col items-center group no-underline">
                 <img src="https://asukacouture.com/cdn/shop/files/Untitled_design_70x.png?v=1672665412"
                   alt="Asuka"
-                  className={`${isScrolled ? 'h-5' : 'h-8'} brightness-0 invert transition-all duration-300`}
+                  className={`${isScrolled ? 'h-5' : 'h-10'} brightness-0 invert transition-all duration-300`}
                 />
                 <span className={`${isScrolled ? 'text-lg tracking-[4px]' : 'text-2xl tracking-[8px]'} font-serif text-white uppercase font-light transition-all duration-300 mt-1`}>ASUKĀ</span>
               </Link>
             </div>
 
-            {/* RIGHT: AI links (Desktop) / Search (Mobile) */}
+            {/* RIGHT: Actions */}
             <div className="flex justify-end items-center gap-4 lg:gap-6">
-              {/* Desktop Actions */}
               <div className="hidden md:flex items-center gap-5">
-                <Link href="/make-it-yourself" className="font-mono text-[9px] tracking-[2px] text-white no-underline opacity-80 hover:opacity-100 whitespace-nowrap">
+                <Link href="/make-it-yourself" className="font-mono text-[9px] tracking-[1.5px] text-white no-underline opacity-80 hover:opacity-100 whitespace-nowrap">
                   ✦ MAKE IT YOURSELF
                 </Link>
-                <Link href="/sizing" className="bg-white text-[#a17a58] px-4 py-2 text-[9px] font-mono tracking-[2px] no-underline font-bold whitespace-nowrap hover:bg-[#a17a58] hover:text-white transition-colors">
+                <Link href="/sizing" className="bg-white text-[#a17a58] px-4 py-2 text-[9px] font-mono tracking-[1.5px] no-underline font-bold whitespace-nowrap hover:bg-[#a17a58] hover:text-white transition-colors">
                   AI SIZER
                 </Link>
               </div>
-
-              {/* Mobile Search Icon */}
-              <Link href="/search" className="text-white p-2 md:opacity-80 md:hover:opacity-100 transition-opacity">
+              <Link href="/search" className="text-white p-2">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="7" /><path d="m16.5 16.5 4 4" /></svg>
               </Link>
             </div>
           </div>
         </header>
+
+        {/* This pull the Hero section under the transparent header */}
+        {!isScrolled && <div className="h-0 -mb-28" />}
 
         {/* MOBILE OVERLAY MENU */}
         {isMenuOpen && (
