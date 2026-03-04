@@ -4,7 +4,6 @@ import Image from 'next/image'
 import { useState } from 'react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
-import AIStylist from '@/components/AIStylist'
 import { HERO_ETHNIC, HERO_WESTERN, STORES, BRAND_SLIDER_IMAGES, formatPrice } from '@/lib/site-data'
 import { getCelebrityProducts, type CatalogProduct } from '@/lib/catalog'
 
@@ -34,6 +33,17 @@ export default function Home() {
               className={`object-cover absolute inset-0 transition-all duration-500 ${heroTab === 'western' ? 'scale-[1.02]' : 'scale-100'}`} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
           </Link>
+
+          {/* Centered MIY Overlay Button */}
+          <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('openAsukaPanel', { detail: { tab: 'make' } }))}
+              className="pointer-events-auto bg-[#1a1410]/80 backdrop-blur-md text-white border border-[#a17a58] px-8 py-4 uppercase tracking-[4px] font-mono text-xs sm:text-sm hover:bg-[#a17a58] transition-all duration-300 shadow-2xl flex items-center gap-2 group"
+            >
+              <span className="group-hover:rotate-12 transition-transform duration-300">✨</span>
+              Make It Yourself
+            </button>
+          </div>
         </section>
 
         {/* ═══ 2. SPOTTED IN ASUKA — Celebrity grid ═══ */}
@@ -104,7 +114,6 @@ export default function Home() {
 
       </main>
       <Footer />
-      <AIStylist />
     </>
   )
 }

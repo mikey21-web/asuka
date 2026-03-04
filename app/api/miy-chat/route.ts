@@ -3,22 +3,22 @@ import { Groq } from 'groq-sdk'
 import { getAllProducts } from '@/lib/catalog'
 
 const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY
+  apiKey: process.env.GROQ_API_KEY
 })
 
 export async function POST(req: Request) {
-    try {
-        const { inputs, message, history } = await req.json()
-        if (!inputs && !message) return NextResponse.json({ error: 'Data is required' }, { status: 400 })
+  try {
+    const { inputs, message, history } = await req.json()
+    if (!inputs && !message) return NextResponse.json({ error: 'Data is required' }, { status: 400 })
 
-        const allProducts = getAllProducts()
-        const shuffled = [...allProducts].sort(() => 0.5 - Math.random())
-        const simplifiedCatalog = shuffled.slice(0, 30).map(p => ({
-            title: p.title,
-            image_url: p.first_image
-        }))
+    const allProducts = getAllProducts()
+    const shuffled = [...allProducts].sort(() => 0.5 - Math.random())
+    const simplifiedCatalog = shuffled.slice(0, 30).map(p => ({
+      title: p.title,
+      image_url: p.first_image
+    }))
 
-        const systemPrompt = `You are the **Master Bespoke Tailor** at Asuka Couture's Atelier — where every stitch tells a story.
+    const systemPrompt = `You are the **Master Bespoke Tailor** at Asuka Couture's Atelier — where every stitch tells a story.
 
 PERSONALITY:
 - Speak like a passionate artisan, not a bot. You LOVE what you do
@@ -31,6 +31,7 @@ DESIGN FLOW:
 2. Follow-ups: Narrow down fabric, color, silhouette, embellishment
 3. Once enough info: Present 2-3 curated looks with names and details
 4. After looks: Help refine their favorite, suggest add-ons
+
 
 VISUAL REFERENCE:
 Use these Asuka products as visual reference only:
@@ -52,33 +53,40 @@ RESPONSE FORMAT (MUST be pure JSON, no markdown):
   ]
 }
 
-IMPORTANT: design_summary and image_prompt should only appear once we have enough details to visualize. For initial chat, omit them or set to null.`
+IMPORTANT: design_summary and image_prompt should only appear once we have enough details to visualize. For initial chat, omit them or set to null.
 
-        const messages = [
-            { role: 'system', content: systemPrompt },
-            ...(history || []),
-            { role: 'user', content: message }
-        ]
+*** CRITICAL GUARDRAILS — YOU MUST FOLLOW THESE STRICTLY ***
+Rule 1: If the user's message is gibberish (e.g., "ajksdhfg", "adsfasdf", "test1234") or completely nonsensical:
+=> Your JSON "message" MUST exactly be: "I apologize, but I didn't quite catch that. To craft your bespoke masterpiece, could you tell me what occasion you are dressing for or what style you envision?"
 
-        const completion = await groq.chat.completions.create({
-            messages: messages as any,
-            model: 'llama-3.3-70b-versatile',
-            temperature: 0.7,
-            max_tokens: 1500,
-            response_format: { type: "json_object" }
-        })
+Rule 2: If the user's message is completely unrelated to clothing, fashion, tailoring, or Asuka Couture (e.g., coding, math, world facts):
+=> Your JSON "message" MUST exactly be: "As a Master Tailor, my expertise lies solely in crafting exceptional menswear. How may I assist you with your bespoke garment today?"`
 
-        const responseContent = completion.choices[0]?.message?.content || '{}'
-        let parsedResponse;
-        try {
-            parsedResponse = JSON.parse(responseContent)
-        } catch {
-            parsedResponse = { message: "I apologize, my atelier had a brief interruption. Could you repeat your preferences?", looks: [] }
-        }
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...(history || []),
+      { role: 'user', content: message }
+    ]
 
-        return NextResponse.json(parsedResponse)
-    } catch (error) {
-        console.error('MIY API Error:', error)
-        return NextResponse.json({ error: 'Failed to process request' }, { status: 500 })
+    const completion = await groq.chat.completions.create({
+      messages: messages as any,
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.7,
+      max_tokens: 1500,
+      response_format: { type: "json_object" }
+    })
+
+    const responseContent = completion.choices[0]?.message?.content || '{}'
+    let parsedResponse;
+    try {
+      parsedResponse = JSON.parse(responseContent)
+    } catch {
+      parsedResponse = { message: "I apologize, my atelier had a brief interruption. Could you repeat your preferences?", looks: [] }
     }
+
+    return NextResponse.json(parsedResponse)
+  } catch (error) {
+    console.error('MIY API Error:', error)
+    return NextResponse.json({ error: 'Failed to process request' }, { status: 500 })
+  }
 }

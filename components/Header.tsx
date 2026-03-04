@@ -83,16 +83,17 @@ export default function Header() {
               </Link>
             </div>
 
-            {/* CENTER: Desktop nav links (hidden on mobile) */}
-            <nav className="hidden lg:flex items-center gap-5">
-              <Link href="/ethnic-home" className="text-white no-underline text-[9px] font-mono tracking-[1.5px] font-medium uppercase hover:text-[#a17a58] transition-colors">ETHNIC</Link>
-              <Link href="/western-home" className="text-white no-underline text-[9px] font-mono tracking-[1.5px] font-medium uppercase hover:text-[#a17a58] transition-colors">WESTERN</Link>
-              <Link href="/collections/celebrity-styles" className="text-white no-underline text-[9px] font-mono tracking-[1.5px] font-medium uppercase hover:text-[#a17a58] transition-colors">CELEBRITY STYLES</Link>
+            {/* CENTER: Desktop nav links          {/* Desktop Nav */}
+            <nav className="hidden md:flex items-center justify-center gap-8 lg:gap-12 flex-1 ml-10">
+              <Link href="/ethnic-home" className={`text-sm tracking-widest no-underline transition-colors ${isWestern ? 'text-white/80 hover:text-white' : 'text-[#1a1410]/70 hover:text-[#1a1410]'}`}>ETHNIC</Link>
+              <Link href="/western-home" className={`text-sm tracking-widest no-underline transition-colors ${isWestern ? 'text-white/80 hover:text-white' : 'text-[#1a1410]/70 hover:text-[#1a1410]'}`}>WESTERN</Link>
+              <Link href="/collections/celebrity-styles" className={`text-sm tracking-widest no-underline transition-colors ${isWestern ? 'text-white/80 hover:text-white' : 'text-[#1a1410]/70 hover:text-[#1a1410]'}`}>CELEBRITIES</Link>
+              <a href="#" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('openAsukaPanel', { detail: { tab: 'style' } })) }} className="text-sm tracking-widest no-underline transition-colors text-[#a17a58] hover:text-[#1a1410] font-semibold">AI STYLIST ✨</a>
             </nav>
 
             {/* RIGHT: Actions */}
             <div className="flex items-center gap-3">
-              <Link href="/make-it-yourself" className="hidden md:inline font-mono text-[9px] tracking-[1.5px] text-white no-underline opacity-80 hover:opacity-100 whitespace-nowrap">✦ MAKE IT YOURSELF</Link>
+              <a href="#" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('openAsukaPanel', { detail: { tab: 'make' } })) }} className="hidden md:inline font-mono text-[9px] tracking-[1.5px] text-white no-underline opacity-80 hover:opacity-100 whitespace-nowrap">✦ MAKE IT YOURSELF</a>
               <Link href="/sizing" className="hidden md:inline bg-white text-[#a17a58] px-3 py-1.5 text-[9px] font-mono tracking-[1.5px] no-underline font-bold whitespace-nowrap hover:bg-[#a17a58] hover:text-white transition-colors">AI SIZER</Link>
               <Link href="/search" className="text-white p-1">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="7" /><path d="m16.5 16.5 4 4" /></svg>
@@ -121,8 +122,8 @@ export default function Header() {
                 <hr className="border-none border-t border-[#eee]" />
 
                 <div className="flex flex-col gap-4">
-                  <Link href="/make-it-yourself" onClick={() => setIsMenuOpen(false)} className="text-sm font-mono no-underline text-[#a17a58]">MAKE IT YOURSELF</Link>
-                  <Link href="/stylist" onClick={() => setIsMenuOpen(false)} className="text-sm font-mono no-underline text-[#1a1410]">AI STYLIST</Link>
+                  <a href="#" onClick={(e) => { e.preventDefault(); setIsMenuOpen(false); window.dispatchEvent(new CustomEvent('openAsukaPanel', { detail: { tab: 'make' } })) }} className="text-sm font-mono no-underline text-[#a17a58]">MAKE IT YOURSELF</a>
+                  <a href="#" onClick={(e) => { e.preventDefault(); setIsMenuOpen(false); window.dispatchEvent(new CustomEvent('openAsukaPanel', { detail: { tab: 'style' } })) }} className="text-sm font-mono no-underline text-[#1a1410]">AI STYLIST</a>
                   <Link href="/sizing" onClick={() => setIsMenuOpen(false)} className="text-sm font-mono no-underline text-[#1a1410]">AI SIZER</Link>
                   <Link href="/store-locator" onClick={() => setIsMenuOpen(false)} className="text-sm font-mono no-underline text-[#1a1410]">STORE LOCATOR</Link>
                 </div>
@@ -210,7 +211,7 @@ export default function Header() {
 
           {/* Right: Actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Link href="/make-it-yourself" style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '1.5px', color: isWestern ? 'white' : '#a17a58', textDecoration: 'none', whiteSpace: 'nowrap' }} className="hidden sm:inline">✦ MAKE IT YOURSELF</Link>
+            <a href="#" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('openAsukaPanel', { detail: { tab: 'make' } })) }} style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '1.5px', color: isWestern ? 'white' : '#a17a58', textDecoration: 'none', whiteSpace: 'nowrap' }} className="hidden sm:inline">✦ MAKE IT YOURSELF</a>
             <Link href="/sizing" style={{ background: isWestern ? 'white' : '#a17a58', color: isWestern ? '#609696' : 'white', padding: '8px 16px', fontSize: '9px', fontFamily: 'var(--font-mono)', letterSpacing: '2px', textDecoration: 'none', fontWeight: 600 }} className="hidden sm:inline">AI SIZER</Link>
             {/* User */}
             <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: isWestern ? 'white' : '#1a1410' }} className="hidden sm:block">
@@ -245,8 +246,8 @@ export default function Header() {
               <hr style={{ border: 'none', borderTop: '1px solid #eee' }} />
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <Link href="/make-it-yourself" onClick={() => setIsMenuOpen(false)} style={{ fontSize: '14px', fontFamily: 'var(--font-mono)', textDecoration: 'none', color: '#a17a58' }}>MAKE IT YOURSELF</Link>
-                <Link href="/stylist" onClick={() => setIsMenuOpen(false)} style={{ fontSize: '14px', fontFamily: 'var(--font-mono)', textDecoration: 'none', color: '#1a1410' }}>AI STYLIST</Link>
+                <a href="#" onClick={(e) => { e.preventDefault(); setIsMenuOpen(false); window.dispatchEvent(new CustomEvent('openAsukaPanel', { detail: { tab: 'make' } })) }} style={{ fontSize: '14px', fontFamily: 'var(--font-mono)', textDecoration: 'none', color: '#a17a58' }}>MAKE IT YOURSELF</a>
+                <a href="#" onClick={(e) => { e.preventDefault(); setIsMenuOpen(false); window.dispatchEvent(new CustomEvent('openAsukaPanel', { detail: { tab: 'style' } })) }} style={{ fontSize: '14px', fontFamily: 'var(--font-mono)', textDecoration: 'none', color: '#1a1410' }}>AI STYLIST</a>
                 <Link href="/sizing" onClick={() => setIsMenuOpen(false)} style={{ fontSize: '14px', fontFamily: 'var(--font-mono)', textDecoration: 'none', color: '#1a1410' }}>AI SIZER</Link>
                 <Link href="/store-locator" onClick={() => setIsMenuOpen(false)} style={{ fontSize: '14px', fontFamily: 'var(--font-mono)', textDecoration: 'none', color: '#1a1410' }}>STORE LOCATOR</Link>
               </div>

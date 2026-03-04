@@ -447,14 +447,20 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
 /* ══════════════════════════
    MAIN WIDGET
 ══════════════════════════ */
-export default function AIWidget() {
+export default function AIWidget({ initialTab = 'style', isFloating = false }: { initialTab?: Tab, isFloating?: boolean }) {
+  const [tab, setTab] = useState<Tab>(initialTab)
   const [open, setOpen] = useState(false)
-  const [tab, setTab] = useState<Tab>('sizer')
 
   useEffect(() => {
-    (window as any).openAsukaPanel = (t: Tab) => { setTab(t || 'sizer'); setOpen(true) }
-    return () => { delete (window as any).openAsukaPanel }
-  }, [])
+    if (!isFloating) return
+    const handler = (e: Event) => {
+      const customEvent = e as CustomEvent<{ tab?: Tab }>
+      if (customEvent.detail?.tab) setTab(customEvent.detail.tab)
+      setOpen(true)
+    }
+    window.addEventListener('openAsukaPanel', handler)
+    return () => window.removeEventListener('openAsukaPanel', handler)
+  }, [isFloating])
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'sizer', label: 'AI Sizer' },
@@ -462,61 +468,65 @@ export default function AIWidget() {
     { id: 'make', label: 'Make It' },
   ]
 
-  return (
-    <div className="fixed bottom-24 right-4 sm:bottom-[88px] sm:right-7 z-[9999]">
-      {/* Panel */}
-      {open && (
-        <div className="animate-panelOpen fixed bottom-20 sm:bottom-[100px] right-2 sm:right-7 w-[calc(100vw-16px)] sm:w-[380px] md:w-[420px] max-h-[80vh] sm:max-h-[85vh] bg-[#fdf9f5] border border-[#d4c4b0] flex flex-col shadow-[0_20px_80px_rgba(0,0,0,0.15)] z-[9998] overflow-hidden rounded-xl">
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 bg-[#f5ede3] border-b border-[#d4c4b0] flex-shrink-0">
-            <div style={{ display: 'flex', gap: '2px' }}>
-              {tabs.map(t => (
-                <button type="button" key={t.id} onClick={() => setTab(t.id)} style={{ padding: '7px 14px', background: tab === t.id ? '#a17a58' : 'none', border: tab === t.id ? '1px solid #a17a58' : '1px solid #d4c4b0', color: tab === t.id ? '#fff' : '#a17a58', fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '1.5px', textTransform: 'uppercase', cursor: 'pointer', borderRadius: '4px', transition: 'all 0.2s' }}>
-                  {t.label}
-                </button>
-              ))}
-            </div>
-            <button type="button" onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', color: '#999', fontSize: '18px', cursor: 'pointer', lineHeight: 1, padding: '4px', transition: 'color 0.2s' }} onMouseEnter={e => (e.currentTarget.style.color = '#1a1410')} onMouseLeave={e => (e.currentTarget.style.color = '#999')}>✕</button>
-          </div>
-          {/* Body */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-5 min-h-0">
-            {tab === 'sizer' && <SizerPanel />}
-            {tab === 'style' && (
-              <ChatPanel
-                endpoint="/api/stylist"
-                persona="style"
-                quickPrompts={['Wedding guest', 'Groom · sangeet', 'Office ethnic', 'Beach wedding', 'Eid look', 'Diwali party']}
-                systemHeight={320}
-              />
-            )}
-            {tab === 'make' && (
-              <ChatPanel
-                endpoint="/api/design"
-                persona="design"
-                quickPrompts={['Wedding groom', 'Sangeet night', 'Casual fusion', 'Festive kurta', 'Corporate look']}
-                showPreview={true}
-              />
-            )}
-          </div>
+  const widgetContent = (
+    <div className={`w-full flex flex-col bg-[#fdf9f5] overflow-hidden ${isFloating ? 'h-full sm:rounded-2xl' : 'border border-[#d4c4b0] shadow-sm rounded-xl min-h-[500px]'}`}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 bg-[#f5ede3] border-b border-[#d4c4b0] flex-shrink-0">
+        <div style={{ display: 'flex', gap: '2px', overflowX: 'auto', paddingBottom: '2px' }}>
+          {tabs.map(t => (
+            <button type="button" key={t.id} onClick={() => setTab(t.id)} style={{ padding: '7px 14px', background: tab === t.id ? '#a17a58' : 'none', border: tab === t.id ? '1px solid #a17a58' : '1px solid #d4c4b0', color: tab === t.id ? '#fff' : '#a17a58', fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', cursor: 'pointer', borderRadius: '4px', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+              {t.label}
+            </button>
+          ))}
         </div>
-      )}
-      {/* FAB */}
-      <div style={{ position: 'relative' }}>
-        <button type="button" className="animate-fabPulse" onClick={() => setOpen(o => !o)} style={{ width: '52px', height: '52px', background: '#a17a58', border: 'none', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s', boxShadow: '0 4px 20px rgba(143,101,77,0.4)' }} onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.08)'; }} onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}>
-          {open ? (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-          ) : (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><path d="M8 10h.01" strokeWidth="2.5" strokeLinecap="round" /><path d="M12 10h.01" strokeWidth="2.5" strokeLinecap="round" /><path d="M16 10h.01" strokeWidth="2.5" strokeLinecap="round" /></svg>
-          )}
-        </button>
-        {/* Tooltip */}
-        {!open && (
-          <div className="hidden sm:block" style={{ position: 'absolute', right: '62px', bottom: '50%', transform: 'translateY(50%)', background: '#a17a58', border: 'none', padding: '8px 14px', whiteSpace: 'nowrap', fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '1.5px', color: '#fff', textTransform: 'uppercase', pointerEvents: 'none', borderRadius: '6px', boxShadow: '0 2px 10px rgba(143,101,77,0.3)' }}>
-            AI Style Assistant
-            <span style={{ position: 'absolute', right: '-5px', top: '50%', transform: 'translateY(-50%)', width: 0, height: 0, borderTop: '5px solid transparent', borderBottom: '5px solid transparent', borderLeft: '5px solid #a17a58' }} />
-          </div>
+      </div>
+      {/* Body */}
+      <div className="flex-1 overflow-y-auto p-4 sm:p-5 relative">
+        {tab === 'sizer' && <SizerPanel />}
+        {tab === 'style' && (
+          <ChatPanel
+            key="style"
+            endpoint="/api/stylist"
+            persona="style"
+            quickPrompts={['Wedding guest', 'Groom · sangeet', 'Office ethnic', 'Beach wedding', 'Eid look', 'Diwali party']}
+            systemHeight={isFloating ? 400 : 320}
+          />
+        )}
+        {tab === 'make' && (
+          <ChatPanel
+            key="make"
+            endpoint="/api/design"
+            persona="design"
+            quickPrompts={['Wedding groom', 'Sangeet night', 'Casual fusion', 'Festive kurta', 'Corporate look']}
+            showPreview={true}
+          />
         )}
       </div>
     </div>
+  )
+
+  if (!isFloating) return widgetContent
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className={`animate-fadeUp fixed bottom-5 right-4 sm:bottom-7 sm:right-7 z-[9998] w-[48px] h-[48px] sm:w-[52px] sm:h-[52px] bg-[#1a1410] text-white rounded-full flex items-center justify-center shadow-[0_4px_14px_rgba(26,20,16,0.25)] cursor-pointer hover:scale-110 transition-transform duration-300 ${open ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+        aria-label="Open AI Assistant"
+      >
+        <span style={{ fontSize: '20px' }}>✨</span>
+      </button>
+
+      {open && (
+        <>
+          {/* Mobile Overlay (Only needed if not full screen, kept for safety) */}
+          <div className="fixed inset-0 bg-black/40 z-[9998] sm:hidden animate-fadeIn" onClick={() => setOpen(false)} />
+          <div className="fixed inset-0 sm:inset-auto sm:bottom-24 sm:right-7 z-[9999] w-full sm:w-[400px] h-[100svh] sm:h-[650px] flex flex-col animate-panelOpen shadow-2xl sm:rounded-2xl overflow-hidden sm:border border-[#e0d5c8] bg-white">
+            <button onClick={() => setOpen(false)} className="absolute top-2 right-2 sm:top-4 sm:right-4 z-[100] w-8 h-8 flex items-center justify-center bg-[#f5ede3] rounded-full text-[#a17a58] hover:bg-[#a17a58] hover:text-white transition-colors">✕</button>
+            {widgetContent}
+          </div>
+        </>
+      )}
+    </>
   )
 }

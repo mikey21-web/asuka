@@ -37,15 +37,8 @@ export default function ProductPage() {
 
     const [selectedSize, setSelectedSize] = useState('')
     const [mainImgIdx, setMainImgIdx] = useState(0)
-    const [sizerOpen, setSizerOpen] = useState(false)
 
     // Sizer state — button-based steps
-    const [sizerStep, setSizerStep] = useState(1) // 1:brand, 2:size, 3:fit, 4:result
-    const [sizerBrand, setSizerBrand] = useState('')
-    const [sizerSize, setSizerSize] = useState('')
-    const [sizerFit, setSizerFit] = useState('')
-    const [recommendedSize, setRecommendedSize] = useState('')
-    const [confidence, setConfidence] = useState(0)
 
     if (!product) {
         return (
@@ -64,27 +57,8 @@ export default function ProductPage() {
 
     const images = product.all_images.length > 0 ? product.all_images : (product.first_image !== 'NO IMAGE' ? [product.first_image] : [])
 
-    function calculateSize() {
-        const brandData = BRAND_SIZES[sizerBrand] || BRAND_SIZES['Other']
-        const mapping = brandData[sizerSize] || { asuka: sizerSize, confidence: 75 }
-        // Adjust confidence based on fit preference
-        let adj = mapping.confidence
-        if (sizerFit === 'Slim Fit') adj = Math.min(adj + 2, 98)
-        if (sizerFit === 'Relaxed Fit') adj = Math.max(adj - 3, 70)
-        setRecommendedSize(mapping.asuka)
-        setConfidence(adj)
-        setSizerStep(4)
-    }
-
-    function resetSizer() {
-        setSizerStep(1); setSizerBrand(''); setSizerSize(''); setSizerFit('')
-        setRecommendedSize(''); setConfidence(0)
-    }
-
-    function applySizerResult() {
-        setSelectedSize(recommendedSize)
-        setSizerOpen(false)
-    }
+    function calculateSize() { }
+    function resetSizer() { }
 
     const btnBase = { fontFamily: 'var(--font-sans)', fontSize: '12px', cursor: 'pointer', transition: 'all 0.2s', border: '1px solid #ddd', background: 'white', color: BRAND_INK, padding: '10px 16px' }
 
@@ -137,7 +111,7 @@ export default function ProductPage() {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', alignItems: 'center' }}>
                                     <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 500, color: BRAND_INK, textTransform: 'uppercase', letterSpacing: '1px' }}>Size</span>
                                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                        <button type="button" onClick={() => { resetSizer(); setSizerOpen(true) }}
+                                        <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('openAsukaPanel', { detail: { tab: 'sizer' } }))}
                                             style={{ background: 'none', border: 'none', color: BRAND_COPPER, fontFamily: 'var(--font-sans)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '3px' }}>
                                             🤖 AI Size Finder
                                         </button>
@@ -161,20 +135,10 @@ export default function ProductPage() {
                                         </button>
                                     ))}
                                 </div>
-                                <button type="button" onClick={() => { if ((window as any).openAsukaPanel) (window as any).openAsukaPanel('sizer') }} className="flex items-center gap-2 text-[#a17a58] hover:text-[#1a1410] font-sans text-sm mb-6 pb-1 border-b border-[#a17a58]/30 hover:border-[#1a1410] transition-colors w-fit">
+                                <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('openAsukaPanel', { detail: { tab: 'sizer' } }))} className="flex items-center gap-2 text-[#a17a58] hover:text-[#1a1410] font-sans text-sm mb-6 pb-1 border-b border-[#a17a58]/30 hover:border-[#1a1410] transition-colors w-fit">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
                                     Find Your Perfect Fit with AI
                                 </button>
-                                {recommendedSize && confidence > 0 && (
-                                    <div style={{ marginTop: '12px', padding: '10px 14px', background: '#f5f0e8', borderLeft: `3px solid ${BRAND_COPPER}` }}>
-                                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', color: BRAND_INK, marginBottom: '6px' }}>
-                                            AI recommends: <strong>{recommendedSize}</strong> ({confidence}% confident)
-                                        </div>
-                                        <div style={{ height: '4px', background: '#e0d5c8', borderRadius: '2px', overflow: 'hidden' }}>
-                                            <div className="animate-fillBar" style={{ height: '100%', background: BRAND_COPPER, width: `${confidence}%` }} />
-                                        </div>
-                                    </div>
-                                )}
                             </div>
 
                             {/* CTA buttons */}
@@ -186,6 +150,14 @@ export default function ProductPage() {
                                     onMouseEnter={e => e.currentTarget.style.background = BRAND_COPPER}
                                     onMouseLeave={e => e.currentTarget.style.background = BRAND_INK}>
                                     ADD TO CART
+                                </button>
+                                <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('openAsukaPanel', { detail: { tab: 'make' } }))} style={{
+                                    width: '100%', height: '54px', background: 'white', color: BRAND_INK, border: `1px solid ${BRAND_COPPER}`,
+                                    fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 500, letterSpacing: '2px', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.3s',
+                                }}
+                                    onMouseEnter={e => { e.currentTarget.style.background = BRAND_COPPER; e.currentTarget.style.color = 'white'; }}
+                                    onMouseLeave={e => { e.currentTarget.style.background = 'white'; e.currentTarget.style.color = BRAND_INK; }}>
+                                    ✨ MAKE IT YOURSELF
                                 </button>
                                 <a href={`https://wa.me/919063356542?text=Hi, I'm interested in ${encodeURIComponent(product.title)} (${formatPrice(product.price)})`}
                                     target="_blank" rel="noopener noreferrer"
@@ -246,147 +218,7 @@ export default function ProductPage() {
                     </div>
                 </div>
 
-                {/* ═══════════════════════════════════════════
-            AI SIZER MODAL — BUTTON-BASED STEPS
-        ═══════════════════════════════════════════ */}
-                {sizerOpen && (
-                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}
-                        onClick={e => { if (e.target === e.currentTarget) setSizerOpen(false) }}>
-                        <div className="w-[90vw] max-w-[440px] bg-white flex flex-col overflow-hidden animate-panelOpen">
-
-                            {/* Header */}
-                            <div style={{ padding: '18px 20px', background: BRAND_INK, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div>
-                                    <h3 style={{ color: 'white', fontFamily: 'var(--font-sans)', fontSize: '15px', fontWeight: 500, margin: 0, letterSpacing: '1px' }}>🤖 AI SIZE FINDER</h3>
-                                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>for {product.title}</div>
-                                </div>
-                                <button type="button" onClick={() => setSizerOpen(false)} style={{ color: 'white', background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer' }}>×</button>
-                            </div>
-
-                            {/* Progress Bar */}
-                            <div style={{ display: 'flex', gap: '4px', padding: '16px 20px 0' }}>
-                                {[1, 2, 3, 4].map(s => (
-                                    <div key={s} style={{ flex: 1, height: '3px', borderRadius: '2px', background: sizerStep >= s ? BRAND_COPPER : '#e0d5c8', transition: 'background 0.3s' }} />
-                                ))}
-                            </div>
-
-                            {/* Body */}
-                            <div style={{ padding: '20px', minHeight: '320px' }}>
-
-                                {/* STEP 1: Select Brand */}
-                                {sizerStep === 1 && (
-                                    <div className="animate-fadeUp">
-                                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: '16px', fontWeight: 500, color: BRAND_INK, marginBottom: '6px' }}>Which brand do you wear?</div>
-                                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', color: '#888', marginBottom: '20px' }}>This helps us map your size accurately</div>
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-                                            {BRAND_LIST.map(brand => (
-                                                <button type="button" key={brand} onClick={() => { setSizerBrand(brand); setSizerStep(2) }}
-                                                    style={{
-                                                        ...btnBase, padding: '14px 16px', textAlign: 'left', fontWeight: sizerBrand === brand ? 600 : 400,
-                                                        border: sizerBrand === brand ? `1px solid ${BRAND_COPPER}` : '1px solid #e0d5c8',
-                                                        background: sizerBrand === brand ? '#f5f0e8' : 'white'
-                                                    }}
-                                                    onMouseEnter={e => { e.currentTarget.style.borderColor = BRAND_COPPER; e.currentTarget.style.background = '#faf6f1' }}
-                                                    onMouseLeave={e => { if (sizerBrand !== brand) { e.currentTarget.style.borderColor = '#e0d5c8'; e.currentTarget.style.background = 'white' } }}>
-                                                    {brand}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* STEP 2: Select Size in that brand */}
-                                {sizerStep === 2 && (
-                                    <div className="animate-fadeUp">
-                                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: '16px', fontWeight: 500, color: BRAND_INK, marginBottom: '6px' }}>Your size in {sizerBrand}?</div>
-                                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', color: '#888', marginBottom: '20px' }}>Select the size you usually wear</div>
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
-                                            {SIZE_OPTIONS.map(size => (
-                                                <button type="button" key={size} onClick={() => { setSizerSize(size); setSizerStep(3) }}
-                                                    style={{
-                                                        ...btnBase, padding: '12px', textAlign: 'center', fontWeight: 500,
-                                                        border: sizerSize === size ? `1px solid ${BRAND_COPPER}` : '1px solid #e0d5c8',
-                                                        background: sizerSize === size ? BRAND_INK : 'white',
-                                                        color: sizerSize === size ? 'white' : BRAND_INK
-                                                    }}
-                                                    onMouseEnter={e => { if (sizerSize !== size) { e.currentTarget.style.borderColor = BRAND_COPPER } }}
-                                                    onMouseLeave={e => { if (sizerSize !== size) { e.currentTarget.style.borderColor = '#e0d5c8' } }}>
-                                                    {size}
-                                                </button>
-                                            ))}
-                                        </div>
-                                        <button type="button" onClick={() => setSizerStep(1)} style={{ marginTop: '16px', background: 'none', border: 'none', color: '#888', fontFamily: 'var(--font-sans)', fontSize: '12px', cursor: 'pointer' }}>← Back to brand</button>
-                                    </div>
-                                )}
-
-                                {/* STEP 3: Fit preference */}
-                                {sizerStep === 3 && (
-                                    <div className="animate-fadeUp">
-                                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: '16px', fontWeight: 500, color: BRAND_INK, marginBottom: '6px' }}>How do you like your fit?</div>
-                                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', color: '#888', marginBottom: '20px' }}>This fine-tunes our recommendation</div>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                            {FIT_OPTIONS.map(fit => (
-                                                <button type="button" key={fit} onClick={() => { setSizerFit(fit); calculateSize() }}
-                                                    style={{ ...btnBase, padding: '16px 20px', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                                                    onMouseEnter={e => { e.currentTarget.style.borderColor = BRAND_COPPER; e.currentTarget.style.background = '#faf6f1' }}
-                                                    onMouseLeave={e => { e.currentTarget.style.borderColor = '#e0d5c8'; e.currentTarget.style.background = 'white' }}>
-                                                    <span style={{ fontWeight: 500 }}>{fit}</span>
-                                                    <span style={{ fontSize: '11px', color: '#888' }}>
-                                                        {fit === 'Slim Fit' ? 'Tailored, close to body' : fit === 'Regular Fit' ? 'Classic, comfortable' : 'Loose, relaxed'}
-                                                    </span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                        <button type="button" onClick={() => setSizerStep(2)} style={{ marginTop: '16px', background: 'none', border: 'none', color: '#888', fontFamily: 'var(--font-sans)', fontSize: '12px', cursor: 'pointer' }}>← Back to size</button>
-                                    </div>
-                                )}
-
-                                {/* STEP 4: Result */}
-                                {sizerStep === 4 && (
-                                    <div className="animate-fadeUp" style={{ textAlign: 'center' }}>
-                                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', color: '#888', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '8px' }}>Your Perfect Asuka Size</div>
-                                        <div style={{ fontSize: '64px', fontFamily: 'var(--font-sans)', fontWeight: 600, color: BRAND_INK, marginBottom: '8px' }}>{recommendedSize}</div>
-
-                                        {/* Confidence bar */}
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px', justifyContent: 'center' }}>
-                                            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: '#888' }}>Confidence</span>
-                                            <div style={{ width: '120px', height: '4px', background: '#e0d5c8', borderRadius: '2px', overflow: 'hidden' }}>
-                                                <div className="animate-fillBar" style={{ height: '100%', background: confidence > 85 ? '#27ae60' : BRAND_COPPER, width: `${confidence}%` }} />
-                                            </div>
-                                            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', fontWeight: 600, color: confidence > 85 ? '#27ae60' : BRAND_COPPER }}>{confidence}%</span>
-                                        </div>
-
-                                        {/* Summary */}
-                                        <div style={{ background: '#f5f0e8', padding: '16px', marginBottom: '24px', textAlign: 'left' }}>
-                                            <div style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: BRAND_INK, lineHeight: 1.7 }}>
-                                                Based on your <strong>{sizerSize}</strong> in <strong>{sizerBrand}</strong> with a <strong>{sizerFit.toLowerCase()}</strong> preference, we recommend <strong>Asuka size {recommendedSize}</strong>.
-                                            </div>
-                                        </div>
-
-                                        {/* Action buttons */}
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                            <button type="button" onClick={applySizerResult}
-                                                style={{ width: '100%', padding: '14px', background: BRAND_INK, color: 'white', border: 'none', fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 500, letterSpacing: '1px', cursor: 'pointer', transition: 'all 0.3s' }}
-                                                onMouseEnter={e => e.currentTarget.style.background = BRAND_COPPER}
-                                                onMouseLeave={e => e.currentTarget.style.background = BRAND_INK}>
-                                                SELECT SIZE {recommendedSize} →
-                                            </button>
-                                            <button type="button" onClick={resetSizer}
-                                                style={{ width: '100%', padding: '12px', background: 'white', color: BRAND_INK, border: `1px solid #ddd`, fontFamily: 'var(--font-sans)', fontSize: '12px', cursor: 'pointer' }}>
-                                                Start Over
-                                            </button>
-                                            <a href="https://wa.me/919063356542" target="_blank" rel="noopener noreferrer"
-                                                style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: '#25D366', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', marginTop: '4px' }}>
-                                                💬 Talk to a size expert on WhatsApp
-                                            </a>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </main>
+            </main >
             <Footer />
         </>
     )

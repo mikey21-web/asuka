@@ -63,7 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <ScrollToTop />
         <WhatsAppFloat />
-        <AIWidget />
+        <AIWidget isFloating={true} />
         <Analytics />
       </body>
     </html>

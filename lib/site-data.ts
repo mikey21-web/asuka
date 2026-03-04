@@ -107,6 +107,7 @@ export const FOOTER_CONTACT = {
 export const FOOTER_LEGALS = [
     { name: 'About Us', href: '/about-us' },
     { name: 'Contact Us', href: '/contact' },
+    { name: 'AI Stylist', href: '/ai-stylist' },
     { name: 'Shipping Policy', href: 'https://asukacouture.com/policies/shipping-policy' },
     { name: 'Return Policy', href: 'https://asukacouture.com/policies/refund-policy' },
     { name: 'Stockists', href: '/stockists' },
