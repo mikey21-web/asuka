@@ -1,0 +1,173 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ══════════════════════════════════════════
+   ASUKA COUTURE — DESIGN TOKENS
+   Matching live asukacouture.com exactly
+   Primary brown: #a17a58
+   Background: #FAF6F1 (warm white)
+   Dark ink: #1a1410
+   ══════════════════════════════════════════ */
+:root {
+  /* Primary brand accent — exact live site brown */
+  --gold:         #a17a58;
+  --gold-light:   #A67C5B;
+  --gold-dim:     rgba(161, 122, 88, 0.08);
+  --gold-border:  rgba(161, 122, 88, 0.22);
+
+  /* Ink / text */
+  --ink:   #1a1410;
+  --ink2:  #221c17;
+  --ink3:  #2e251e;
+
+  /* Backgrounds */
+  --paper:  #FAF6F1;
+  --paper2: #F5EDE3;
+  --cream:  #FAF6F1;
+
+  /* Muted tones */
+  --stone:  #7A6A5A;
+  --stone2: #9A8878;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: #ffffff;
+  color: var(--ink);
+  font-family: var(--font-sans), 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #f5ece3; }
+::-webkit-scrollbar-thumb { background: rgba(161,122,88,0.3); border-radius: 2px; }
+
+/* ── LINK ── */
+a { color: inherit; }
+
+/* ── SELECTION ── */
+::selection { background: rgba(161,122,88,0.15); color: var(--ink); }
+
+/* ── TYPOGRAPHY ── */
+.font-serif { font-family: var(--font-serif), 'Cormorant Garamond', Georgia, serif; }
+.font-mono  { font-family: var(--font-mono), 'Courier New', monospace; }
+.font-sans  { font-family: var(--font-sans), 'Helvetica Neue', Arial, sans-serif; }
+
+/* ── MARQUEE ── */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.animate-marquee { animation: marquee 28s linear infinite; }
+
+/* ── SCROLL LINE ── */
+@keyframes scrollLine {
+  0%, 100% { transform: scaleY(1); opacity: 0.6; }
+  50%       { transform: scaleY(0.5); opacity: 1; }
+}
+.animate-scrollLine { animation: scrollLine 2s ease-in-out infinite; }
+
+/* ── SPINNER ── */
+@keyframes spin { to { transform: rotate(360deg); } }
+.animate-spin-slow { animation: spin 0.8s linear infinite; }
+
+/* ── FAB PULSE — using brand brown ── */
+@keyframes fabPulse {
+  0%, 100% { box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 0 0 rgba(161,122,88,0.35); }
+  50%       { box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 0 12px rgba(161,122,88,0); }
+}
+.animate-fabPulse { animation: fabPulse 3s ease-in-out infinite; }
+
+/* ── MIC PULSE (VoiceInput) ── */
+@keyframes pulse {
+  0%   { transform: scale(1);  opacity: 0.5; }
+  100% { transform: scale(2);  opacity: 0; }
+}
+
+/* ── FADE UP ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeUp { animation: fadeUp 0.35s ease forwards; }
+
+/* ── CONFIDENCE BAR ── */
+@keyframes fillBar { from { width: 0; } }
+.animate-fillBar { animation: fillBar 0.9s ease forwards; }
+
+/* ── PANEL OPEN ── */
+@keyframes panelOpen {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-panelOpen { animation: panelOpen 0.28s cubic-bezier(0.16,1,0.3,1) forwards; }
+
+/* ── CHAT SCROLLBAR ── */
+.chat-scroll::-webkit-scrollbar { width: 2px; }
+.chat-scroll::-webkit-scrollbar-thumb { background: rgba(161,122,88,0.3); }
+
+/* ── PRODUCT IMAGE HOVER ── */
+.product-img-wrap img { transition: transform 0.6s ease; }
+.product-img-wrap:hover img { transform: scale(1.05); }
+
+/* ── STRONG TEXT in AI replies ── */
+.reply-text strong { color: var(--gold); font-weight: 600; }
+
+/* ── BUTTON RESET ── */
+button { cursor: pointer; }
+
+/* ── INPUT FOCUS ── */
+input:focus, textarea:focus, select:focus {
+  outline: 1px solid rgba(161,122,88,0.4);
+}
+
+/* ── FILTER / SORT DROPDOWN NATIVE ── */
+select option { background: white; color: #1a1410; }
+
+/* ── ANNOUNCEMENT BAR ── */
+.announcement-bar {
+  background: #a17a58;
+  color: white;
+  text-align: center;
+  padding: 10px 16px;
+  font-size: 12px;
+  letter-spacing: 2px;
+  font-family: var(--font-mono), monospace;
+}
+
+/* ── VOICE INPUT MIC — highly visible in brand brown ── */
+.voice-mic-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #a17a58;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(161,122,88,0.3);
+}
+.voice-mic-btn:hover { background: #6b4730; transform: scale(1.05); }
+.voice-mic-btn.listening {
+  background: #c0392b;
+  animation: fabPulse 1s ease-in-out infinite;
+}
+.voice-mic-btn svg { stroke: white !important; }
+
+/* ── RANGE INPUT ── */
+input[type="range"] {
+  accent-color: #a17a58;
+  height: 4px;
+}
+
+/* ── CHECKBOX ── */
+input[type="checkbox"] { accent-color: #a17a58; }
+input[type="radio"]    { accent-color: #a17a58; }

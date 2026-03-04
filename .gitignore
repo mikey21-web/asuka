@@ -1,0 +1,13 @@
+.env.local
+.env
+node_modules/
+.next/
+out/
+.DS_Store
+*.tsbuildinfo
+
+# Data and Scripts
+*.html
+*.py
+lib/*.json
+lib/full_catalog_audit.json
