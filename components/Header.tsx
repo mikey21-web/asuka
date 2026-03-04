@@ -75,10 +75,13 @@ export default function Header() {
             </nav>
 
             {/* CENTER: ASUKA logo */}
-            <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
-              <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <img src="https://asukacouture.com/cdn/shop/files/Untitled_design_70x.png?v=1672665412" alt="Asuka" style={{ height: '32px', filter: 'brightness(0) invert(1)' }} />
-                <span style={{ fontFamily: 'var(--font-serif)', fontSize: '24px', letterSpacing: '6px', color: 'white', textTransform: 'uppercase', fontWeight: 300 }} className="hidden sm:inline">ASUKĀ</span>
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+              <Link href="/" className="flex items-center gap-2 no-underline">
+                <img src="https://asukacouture.com/cdn/shop/files/Untitled_design_70x.png?v=1672665412"
+                  alt="Asuka"
+                  className="h-8 brightness-0 invert"
+                />
+                <span className="font-serif text-2xl tracking-[6px] text-white uppercase font-light hidden sm:inline-block">ASUKĀ</span>
               </Link>
             </div>
 
