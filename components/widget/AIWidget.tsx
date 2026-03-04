@@ -290,19 +290,22 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
     const next: ChatMsg[] = [...msgs, { role: 'user', content: txt }]
     setMsgs(next); setInput(''); setLoading(true)
     try {
+      // Build chat history for API (last 10 turns for context)
+      const history = next.slice(-10).map(m => ({ role: m.role, content: m.content }))
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: txt, session_id: sessionId }),
+        body: JSON.stringify({ message: txt, session_id: sessionId, history }),
       })
       const data = await res.json()
       if (data.design_summary) setSummary(data.design_summary)
       if (data.image_prompt) setImgPrompt(data.image_prompt)
-      setMsgs(m => [...m, {
-        role: 'assistant',
-        content: data.reply || data.error || 'Please try again.',
-        products: data.products_mentioned
-      }])
+      // Handle MIY looks format vs stylist format
+      const reply = data.reply || data.message || data.error || 'Please try again.'
+      const products = data.products_mentioned || (data.looks ? data.looks.map((l: any) => ({
+        title: l.name, image_url: l.image_url, price: l.fabric_notes
+      })) : undefined)
+      setMsgs(m => [...m, { role: 'assistant', content: reply, products }])
     } catch {
       setMsgs(m => [...m, { role: 'assistant', content: 'Maafi (Sorry), I had a momentary connection slip. Could you repeat that for me? 🙏' }])
     }
