@@ -8,9 +8,8 @@ import { HERO_ETHNIC, HERO_WESTERN, STORES, BRAND_SLIDER_IMAGES, formatPrice } f
 import { getCelebrityProducts, type CatalogProduct } from '@/lib/catalog'
 
 /* ── Preload celebrity products at module level ── */
-const celebrities = getCelebrityProducts()
-
 export default function Home() {
+  const celebrities = getCelebrityProducts()
   const [heroTab, setHeroTab] = useState<'ethnic' | 'western'>('ethnic')
 
   return (
