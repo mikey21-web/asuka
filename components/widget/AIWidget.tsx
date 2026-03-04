@@ -263,14 +263,30 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
   endpoint: string; persona: string; quickPrompts: string[]
   systemHeight?: number; showPreview?: boolean
 }) {
-  const [msgs, setMsgs] = useState<ChatMsg[]>([])
+  const storageKey = `asuka_chat_${persona}`
+  const [msgs, setMsgs] = useState<ChatMsg[]>(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      const saved = localStorage.getItem(storageKey)
+      return saved ? JSON.parse(saved) : []
+    } catch { return [] }
+  })
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [sessionId] = useState(() => `${persona}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`)
   const [summary, setSummary] = useState<string | null>(null)
   const [imgPrompt, setImgPrompt] = useState<string | null>(null)
+  const [streamingText, setStreamingText] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Save to localStorage whenever msgs change
+  useEffect(() => {
+    if (msgs.length > 0) {
+      try { localStorage.setItem(storageKey, JSON.stringify(msgs.slice(-20))) } catch { }
+    }
+  }, [msgs, storageKey])
+
   // Initialize first assistant message
   useEffect(() => {
     if (msgs.length === 0) {
@@ -281,9 +297,26 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
     }
   }, [persona, msgs.length])
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs, loading])
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs, loading, streamingText])
 
-
+  // Typewriter effect helper
+  const typeWriter = useCallback((text: string, products?: any[]) => {
+    const words = text.split(' ')
+    let i = 0
+    setStreamingText('')
+    const timer = setInterval(() => {
+      i++
+      setStreamingText(words.slice(0, i).join(' '))
+      if (i >= words.length) {
+        clearInterval(timer)
+        setStreamingText(null)
+        setMsgs(m => [...m, { role: 'assistant', content: text, products }])
+        setLoading(false)
+        inputRef.current?.focus()
+      }
+    }, 30) // 30ms per word = fast but visible
+    return timer
+  }, [])
 
   const send = useCallback(async (txt: string) => {
     if (!txt.trim() || loading) return
@@ -305,7 +338,8 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
       const products = data.products_mentioned || (data.looks ? data.looks.map((l: any) => ({
         title: l.name, image_url: l.image_url, price: l.fabric_notes
       })) : undefined)
-      setMsgs(m => [...m, { role: 'assistant', content: reply, products }])
+      // Use typewriter effect for the response
+      typeWriter(reply, products)
     } catch {
       // Graceful fallback - never show errors to user
       const fallbacks = [
@@ -313,10 +347,9 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
         'Thank you for waiting! I had a brief moment — could you share that again? I want to give you the best recommendation.',
         'My apologies for the delay. While I reconnect, you might enjoy browsing our bestsellers at /collections/celebrity-styles'
       ]
-      setMsgs(m => [...m, { role: 'assistant', content: fallbacks[Math.floor(Math.random() * fallbacks.length)] }])
+      typeWriter(fallbacks[Math.floor(Math.random() * fallbacks.length)])
     }
-    setLoading(false); inputRef.current?.focus()
-  }, [msgs, loading, endpoint, sessionId])
+  }, [msgs, loading, endpoint, sessionId, typeWriter])
 
   const chatH = showPreview ? (summary ? 160 : 220) : (systemHeight || 300)
 
@@ -365,12 +398,21 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
             </div>
           </div>
         ))}
-        {loading && (
+        {loading && !streamingText && (
           <div style={{ marginBottom: '14px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', letterSpacing: '2px', textTransform: 'uppercase', color: '#999', marginBottom: '4px' }}>{persona === 'style' ? 'Ayaan · Asuka' : 'Asuka Atelier'}</span>
             <div style={{ padding: '10px 14px', fontSize: '12px', color: '#999', background: '#faf7f2', border: '1px solid #e8e0d6', borderRadius: '6px' }}>
               <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '2px solid #e8e0d6', borderTopColor: '#a17a58', borderRadius: '50%', animation: 'spin 0.7s linear infinite', marginRight: '7px', verticalAlign: 'middle' }} />
               {persona === 'style' ? 'Styling…' : 'Designing…'}
+            </div>
+          </div>
+        )}
+        {/* Streaming typewriter bubble */}
+        {streamingText !== null && (
+          <div className="animate-fadeUp" style={{ marginBottom: '14px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', letterSpacing: '2px', textTransform: 'uppercase', color: '#999', marginBottom: '4px' }}>{persona === 'style' ? 'Ayaan · Asuka' : 'Asuka Atelier'}</span>
+            <div style={{ maxWidth: '85%', padding: '10px 14px', fontSize: '12px', lineHeight: 1.7, color: '#1a1410', background: '#faf7f2', border: '1px solid #e8e0d6', borderRadius: '6px' }}>
+              {streamingText}<span style={{ display: 'inline-block', width: '2px', height: '14px', background: '#a17a58', marginLeft: '2px', verticalAlign: 'middle', animation: 'pulse 0.8s ease-in-out infinite' }} />
             </div>
           </div>
         )}
