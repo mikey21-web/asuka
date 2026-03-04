@@ -52,8 +52,8 @@ export default function Header() {
 
         {/* Floating nav — transparent, overlays the hero image */}
         <header
-          style={{ transition: 'background 0.4s ease' }}
-          className={`fixed top-[39px] left-0 right-0 z-[1001] ${isScrolled ? 'bg-[#1a1410]/85 backdrop-blur-[4px]' : 'bg-transparent'}`}
+          style={{ transition: 'all 0.4s ease' }}
+          className={`${isScrolled ? 'fixed top-0 bg-[#1a1410]/95 backdrop-blur-md' : 'absolute top-[39px] bg-transparent'} left-0 right-0 z-[1001]`}
         >
           <div className="flex items-center justify-between px-5 h-20 max-w-[1600px] mx-auto relative">
             {/* MOBILE ONLY: Hamburger */}
