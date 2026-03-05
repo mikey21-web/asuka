@@ -93,7 +93,7 @@ export default function Header() {
 
             {/* RIGHT: Actions */}
             <div className="flex items-center gap-3">
-              <Link href="/make-it-yourself" className="hidden md:inline font-mono text-[9px] tracking-[1.5px] text-white no-underline opacity-80 hover:opacity-100 whitespace-nowrap">MAKE-IT-YOURSELF</Link>
+              <Link href="/make-it-yourself" className="hidden md:inline font-mono text-[9px] tracking-[1.5px] text-white no-underline opacity-80 hover:opacity-100 whitespace-nowrap">MAKE IT YOURSELF</Link>
               <Link href="/sizing" className="hidden md:inline bg-white text-[#a17a58] px-3 py-1.5 text-[9px] font-mono tracking-[1.5px] no-underline font-bold whitespace-nowrap hover:bg-[#a17a58] hover:text-white transition-colors">AI SIZER</Link>
               <Link href="/search" className="text-white p-1">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="7" /><path d="m16.5 16.5 4 4" /></svg>
@@ -122,7 +122,7 @@ export default function Header() {
                 <hr className="border-none border-t border-[#eee]" />
 
                 <div className="flex flex-col gap-4">
-                  <Link href="/make-it-yourself" onClick={() => setIsMenuOpen(false)} className="text-sm font-mono no-underline text-[#a17a58]">MAKE-IT-YOURSELF</Link>
+                  <Link href="/make-it-yourself" onClick={() => setIsMenuOpen(false)} className="text-sm font-mono no-underline text-[#a17a58]">MAKE IT YOURSELF</Link>
                   <a href="#" onClick={(e) => { e.preventDefault(); setIsMenuOpen(false); window.dispatchEvent(new CustomEvent('openAsukaPanel', { detail: { tab: 'style' } })) }} className="text-sm font-mono no-underline text-[#1a1410]">AI STYLIST</a>
                   <Link href="/sizing" onClick={() => setIsMenuOpen(false)} className="text-sm font-mono no-underline text-[#1a1410]">AI SIZER</Link>
                   <Link href="/store-locator" onClick={() => setIsMenuOpen(false)} className="text-sm font-mono no-underline text-[#1a1410]">STORE LOCATOR</Link>
@@ -188,30 +188,29 @@ export default function Header() {
                 onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#1a1410'}>
                 ACCESSORIES <span style={{ fontSize: '8px' }}>▾</span>
               </span>
-              {showAcc && (
-                <div style={{
-                  position: 'absolute', top: '100%', left: 0, background: 'white',
-                  border: '1px solid #eee', boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
-                  padding: '8px 0', minWidth: '200px', zIndex: 1002, marginTop: '8px',
-                }}>
-                  {ACCESSORIES_ITEMS.map(item => (
-                    <Link key={item.name} href={item.href} style={{
-                      display: 'block', padding: '12px 20px', fontSize: '10px', letterSpacing: '1.5px', fontFamily: 'var(--font-mono)',
-                      textTransform: 'uppercase', color: '#1a1410', textDecoration: 'none',
-                    }}
-                      onMouseEnter={e => e.currentTarget.style.background = '#f5f0e8'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'white'}>
-                      {item.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
+              <div style={{
+                position: 'absolute', top: '100%', left: 0, background: 'white',
+                border: '1px solid #eee', boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                padding: '8px 0', minWidth: '200px', zIndex: 1002, marginTop: '8px',
+                opacity: showAcc ? 1 : 0, pointerEvents: showAcc ? 'auto' : 'none', transition: 'opacity 0.2s'
+              }}>
+                {ACCESSORIES_ITEMS.map(item => (
+                  <Link key={item.name} href={item.href} style={{
+                    display: 'block', padding: '12px 20px', fontSize: '10px', letterSpacing: '1.5px', fontFamily: 'var(--font-mono)',
+                    textTransform: 'uppercase', color: '#1a1410', textDecoration: 'none',
+                  }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#f5f0e8'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'white'}>
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
             </div>
           </nav>
 
           {/* Right: Actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Link href="/make-it-yourself" style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '1.5px', color: isWestern ? 'white' : '#a17a58', textDecoration: 'none', whiteSpace: 'nowrap' }} className="hidden sm:inline">MAKE-IT-YOURSELF</Link>
+            <Link href="/make-it-yourself" style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '1.5px', color: isWestern ? 'white' : '#a17a58', textDecoration: 'none', whiteSpace: 'nowrap' }} className="hidden sm:inline">MAKE IT YOURSELF</Link>
             <Link href="/sizing" style={{ background: isWestern ? 'white' : '#a17a58', color: isWestern ? '#609696' : 'white', padding: '8px 16px', fontSize: '9px', fontFamily: 'var(--font-mono)', letterSpacing: '2px', textDecoration: 'none', fontWeight: 600 }} className="hidden sm:inline">AI SIZER</Link>
             {/* User */}
             <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: isWestern ? 'white' : '#1a1410' }} className="hidden sm:block">
@@ -246,7 +245,7 @@ export default function Header() {
               <hr style={{ border: 'none', borderTop: '1px solid #eee' }} />
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <Link href="/make-it-yourself" onClick={() => setIsMenuOpen(false)} style={{ fontSize: '14px', fontFamily: 'var(--font-mono)', textDecoration: 'none', color: '#a17a58' }}>MAKE-IT-YOURSELF</Link>
+                <Link href="/make-it-yourself" onClick={() => setIsMenuOpen(false)} style={{ fontSize: '14px', fontFamily: 'var(--font-mono)', textDecoration: 'none', color: '#a17a58' }}>MAKE IT YOURSELF</Link>
                 <a href="#" onClick={(e) => { e.preventDefault(); setIsMenuOpen(false); window.dispatchEvent(new CustomEvent('openAsukaPanel', { detail: { tab: 'style' } })) }} style={{ fontSize: '14px', fontFamily: 'var(--font-mono)', textDecoration: 'none', color: '#1a1410' }}>AI STYLIST</a>
                 <Link href="/sizing" onClick={() => setIsMenuOpen(false)} style={{ fontSize: '14px', fontFamily: 'var(--font-mono)', textDecoration: 'none', color: '#1a1410' }}>AI SIZER</Link>
                 <Link href="/store-locator" onClick={() => setIsMenuOpen(false)} style={{ fontSize: '14px', fontFamily: 'var(--font-mono)', textDecoration: 'none', color: '#1a1410' }}>STORE LOCATOR</Link>

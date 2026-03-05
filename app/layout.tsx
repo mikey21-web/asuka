@@ -52,14 +52,12 @@ export const viewport = {
 import WhatsAppFloat from '@/components/WhatsAppFloat'
 import AIWidget from '@/components/widget/AIWidget'
 import ScrollToTop from '@/components/ScrollToTop'
-import CustomCursor from '@/components/CustomCursor'
 import { Analytics } from '@/components/VercelAnalytics'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${cormorant.variable} ${dmMono.variable} ${outfit.variable} ${josefin.variable}`}>
       <body>
-        <CustomCursor />
         {children}
         <ScrollToTop />
         <WhatsAppFloat />
