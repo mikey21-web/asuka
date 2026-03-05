@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { getProductByHandle } from '@/lib/catalog'
 import { formatPrice } from '@/lib/site-data'
 
-const TEAL = '#5f9ea0'
+const TEAL = '#008b8b'
 const ETHNIC_BROWN = '#8f654d'
 const DARK_INK = '#1a1410'
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL']
@@ -147,7 +147,7 @@ export default function ProductPage() {
                                 { title: '3. Care', content: 'Dry clean only. Store in a cool, dry place away from direct sunlight.' }
                             ].map((item, i) => (
                                 <details key={i} className="group border-b border-[#eee] py-4 cursor-pointer">
-                                    <summary className={`flex justify-between items-center text-[12px] font-mono tracking-[2px] uppercase list-none transition-colors ${isWestern ? 'text-[#5f9ea0]' : 'text-[#1a1410]'}`}>
+                                    <summary className={`flex justify-between items-center text-[12px] font-mono tracking-[2px] uppercase list-none transition-colors text-[#8f654d]`}>
                                         {item.title}
                                         <span className="text-xl font-light scale-y-75 group-open:rotate-45 transition-transform">+</span>
                                     </summary>

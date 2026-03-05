@@ -21,7 +21,7 @@
       },
       "navLinksCount": 0,
       "footerLinksCount": 21,
-      "hasAnnouncement": false
+      "hasAnnouncement": true
     },
     "match": false
   },
@@ -55,7 +55,7 @@
       },
       "navLinksCount": 8,
       "footerLinksCount": 21,
-      "hasAnnouncement": false,
+      "hasAnnouncement": true,
       "mainHeading": "SHIRTS"
     },
     "match": false
@@ -90,7 +90,7 @@
       },
       "navLinksCount": 7,
       "footerLinksCount": 21,
-      "hasAnnouncement": false,
+      "hasAnnouncement": true,
       "mainHeading": "SHERWANI"
     },
     "match": false
@@ -125,7 +125,7 @@
       },
       "navLinksCount": 8,
       "footerLinksCount": 21,
-      "hasAnnouncement": false,
+      "hasAnnouncement": true,
       "mainHeading": "TIGER SHROFF IN CHARCOAL GREY WOOLEN SUIT SET"
     },
     "match": false
