@@ -142,7 +142,7 @@ export default function Header() {
   /* ══ INNER PAGES — Standard Asuka Layout ══ */
   return (
     <>
-      <div className="announcement-bar bg-black text-white text-[9px] uppercase font-mono tracking-[2px] flex w-full border-b border-white/10 z-[1002]">
+      <div className="announcement-bar bg-black text-white text-[9px] uppercase font-mono tracking-[2px] hidden sm:flex w-full border-b border-white/10 z-[1002]">
         <Link href="/ethnic-home" className={`flex-1 py-1.5 text-center transition-colors ${!isWestern ? 'bg-[#8f654d] text-white' : 'text-white/60 hover:text-white'}`}>Ethnic Wear</Link>
         <Link href="/western-home" className={`flex-1 py-1.5 text-center transition-colors ${isWestern ? 'bg-[#008b8b] text-white' : 'text-white/60 hover:text-white'}`}>Western Wear</Link>
       </div>

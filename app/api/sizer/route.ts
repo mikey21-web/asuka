@@ -82,30 +82,34 @@ export async function POST(req: NextRequest) {
     if (!result) {
       try {
         const { groqChat } = await import('@/lib/groq')
-        const { fit_preference, body_shape, issues } = body
+        const { fit_preference, body_shape, issues, height, weight } = body
 
-        const prompt = `User size: ${brand} ${size}. 
-             Product type: ${product_type}. 
-             Fit preference: ${fit_preference || 'Regular'}. 
-             Body shape: ${body_shape || 'Average'}. 
-             Fit issues reported: ${issues?.length > 0 ? issues.join(', ') : 'None'}.
+        const prompt = `User's typical brand and size: ${brand} ${size}. 
+             Personal details: Height: ${height || 'N/A'}, Weight: ${weight || 'N/A'}.
+             Product category for fitting: ${product_type}. 
+             Client's fit preference: ${fit_preference || 'Regular'}. 
+             Client's body shape: ${body_shape || 'Average'}. 
+             Known fit issues: ${issues?.length > 0 ? issues.join(', ') : 'None'}.
              
-             Map this to an exact Asuka size (Number format like 36, 38, 40, 42, 44, 46). 
-             Consider how ${brand} fits relative to standard and the specific body shape.
-             If they have specific fit issues (e.g. Sleeves too long), provide an alternative size and a recommendation that mitigates this in the reasoning.
+             Task: act as Asuka's Head of Fit & Tailoring. Map these inputs to their ideal Asuka size (Number format: 36, 38, 40, 42, 44, 46). 
              
-             Return ONLY valid JSON matching this exact structure:
+             Reasoning Strategy:
+             - Mention why you picked the size (e.g. 'Since Zara runs small' or 'Given your athletic build').
+             - If they have a fit issue like 'Shoulder drops', suggest a size that solves it.
+             - Keep the tone premium and reassuring.
+             
+             Return ONLY valid JSON:
              {
-               "size": "40", 
-               "alternative": "42", 
-               "confidence": "High", 
-               "reasoning": "Based on your inputs + optional photos... [brief fit notes here]"
+               "size": "Number string (e.g. '40')", 
+               "alternative": "Alternative size or 'MTO' for custom", 
+               "confidence": "High/Medium/Low", 
+               "reasoning": "Detailed, conversational reasoning in 2-3 sentences."
              }`
 
         const aiResponse = await groqChat([
-          { role: 'system', content: 'You are the Elite Asuka Couture master tailor AI. Always respond in pure JSON.' },
+          { role: 'system', content: 'You are the Elite Asuka Couture master tailor AI. Provide expert sizing advice in pure JSON.' },
           { role: 'user', content: prompt }
-        ], 300, 0.4)
+        ], 500, 0.3)
 
         let aiResult = { size: "40", alternative: "42", confidence: "Medium", reasoning: "Based on your inputs, we recommend taking a standard size and speaking to a tailor." }
         try {

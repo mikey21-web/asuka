@@ -1,11 +1,12 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import VoiceInput from '../ai/VoiceInput'
 import { ASUKA_PRODUCTS } from '@/lib/groq'
 
 /* ── TYPES ── */
-type Tab = 'sizer' | 'style'
+type Tab = 'style'
 type ChatMsg = { role: 'user' | 'assistant'; content: string; products?: string[] }
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
 
@@ -118,173 +119,6 @@ function ProductCard({ p: productObj, name }: { p?: any; name?: string }) {
           VIEW PRODUCT →
         </a>
       </div>
-    </div>
-  )
-}
-
-/* ══════════════════════════
-   SIZER PANEL
-══════════════════════════ */
-export function SizerPanel() {
-  const [step, setStep] = useState(1)
-  const [pt, setPt] = useState('kurta')
-  const [brand, setBrand] = useState('')
-  const [size, setSize] = useState('')
-  const [fit, setFit] = useState('Regular')
-  const [shape, setShape] = useState('Athletic')
-  const [issues, setIssues] = useState<string[]>([])
-  const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<any>(null)
-
-  const ISSUES_LIST = ['Sleeves too long', 'Waist too tight', 'Tight on chest', 'Shoulder drops', 'Hip tight']
-  const SHAPES = ['Athletic', 'Lean', 'Broad Chest', 'Belly', 'Broad Shoulders']
-
-  async function run() {
-    setLoading(true)
-    try {
-      const res = await fetch('/api/sizer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: 'brand_size', brand, size, product_type: pt, fit_preference: fit, body_shape: shape, issues }),
-      })
-      const data = await res.json()
-      setResult(data)
-      setStep(3)
-    } catch {
-      setResult({ asuka_size: 'M', confidence: 0.84, reasoning: 'We recommend Asuka M based on your regular brand size.' })
-      setStep(3)
-    }
-    setLoading(false)
-  }
-
-  const inputStyle = { width: '100%', background: '#fff', border: '1px solid #d4c4b0', color: '#1a1410', fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 300 as const, padding: '10px 13px', outline: 'none', marginBottom: '10px', borderRadius: '4px' }
-  const selectStyle = { ...inputStyle, appearance: 'none' as const, cursor: 'pointer' }
-
-  return (
-    <div style={{ minHeight: '340px' }}>
-      {/* Progress Stepper */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
-        {[1, 2, 3].map(s => (
-          <div key={s} style={{ flex: 1, height: '3px', background: step >= s ? '#a17a58' : '#e8e0d6', borderRadius: '2px', transition: 'all 0.3s' }} />
-        ))}
-      </div>
-
-      {step === 1 && (
-        <div className="animate-fadeRight">
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '2.5px', color: '#a17a58', textTransform: 'uppercase', marginBottom: '12px' }}>Garment & Brand</div>
-          <select style={selectStyle} value={pt} onChange={e => setPt(e.target.value)}>
-            {['kurta', 'sherwani', 'bandhgala', 'suit', 'jacket', 'shirt'].map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
-          </select>
-          <input style={inputStyle} value={brand} onChange={e => setBrand(e.target.value)} placeholder="Which brand do you wear? (e.g. Zara, H&M)" />
-          <input style={inputStyle} value={size} onChange={e => setSize(e.target.value)} placeholder="Your size in that brand? (e.g. M, 40)" />
-          <button type="button" onClick={() => setStep(2)} disabled={!brand || !size} style={{ width: '100%', padding: '13px', background: '#a17a58', color: '#fff', border: 'none', fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '2px', textTransform: 'uppercase', cursor: (!brand || !size) ? 'not-allowed' : 'pointer', opacity: (!brand || !size) ? 0.4 : 1, transition: 'all 0.2s', borderRadius: '4px', marginTop: '10px' }}>
-            Next: Fit & Shape →
-          </button>
-        </div>
-      )}
-
-      {step === 2 && (
-        <div className="animate-fadeRight">
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '2.5px', color: '#a17a58', textTransform: 'uppercase', marginBottom: '12px' }}>Fit Preference</div>
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-            {['Slim', 'Regular', 'Relaxed'].map(f => (
-              <button type="button" key={f} onClick={() => setFit(f)} style={{ flex: 1, padding: '10px', border: fit === f ? '1px solid #a17a58' : '1px solid #d4c4b0', background: fit === f ? '#a17a58' : 'none', color: fit === f ? '#fff' : '#a17a58', fontFamily: 'var(--font-mono)', fontSize: '8px', cursor: 'pointer', borderRadius: '4px' }}>{f.toUpperCase()}</button>
-            ))}
-          </div>
-
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '2.5px', color: '#a17a58', textTransform: 'uppercase', marginBottom: '12px' }}>Body Shape</div>
-          <select style={selectStyle} value={shape} onChange={e => setShape(e.target.value)}>
-            {SHAPES.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '2.5px', color: '#a17a58', textTransform: 'uppercase', marginBottom: '10px' }}>Common Fit Issues</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '20px' }}>
-            {ISSUES_LIST.map(issue => (
-              <label key={issue} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', color: '#555', cursor: 'pointer' }}>
-                <input type="checkbox" checked={issues.includes(issue)} onChange={e => e.target.checked ? setIssues([...issues, issue]) : setIssues(issues.filter(i => i !== issue))} />
-                {issue}
-              </label>
-            ))}
-          </div>
-
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '2.5px', color: '#a17a58', textTransform: 'uppercase', marginBottom: '10px' }}>Upload Photos (Optional)</div>
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-            <div style={{ flex: 1 }}>
-              <input
-                type="file"
-                id="front-view"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) alert(`Front View Uploaded: ${file.name}`);
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => document.getElementById('front-view')?.click()}
-                style={{ width: '100%', padding: '12px', border: '1px dashed #d4c4b0', background: '#fff', color: '#999', fontSize: '10px', borderRadius: '4px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
-                <span>Front View</span>
-              </button>
-            </div>
-            <div style={{ flex: 1 }}>
-              <input
-                type="file"
-                id="side-view"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) alert(`Side View Uploaded: ${file.name}`);
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => document.getElementById('side-view')?.click()}
-                style={{ width: '100%', padding: '12px', border: '1px dashed #d4c4b0', background: '#fff', color: '#999', fontSize: '10px', borderRadius: '4px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
-                <span>Side View</span>
-              </button>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button type="button" onClick={() => setStep(1)} style={{ flex: 0.5, padding: '13px', background: 'none', color: '#a17a58', border: '1px solid #d4c4b0', fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '2px', textTransform: 'uppercase', cursor: 'pointer', borderRadius: '4px' }}>Back</button>
-            <button type="button" onClick={run} disabled={loading} style={{ flex: 1, padding: '13px', background: '#a17a58', color: '#fff', border: 'none', fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '2px', textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer', borderRadius: '4px' }}>
-              {loading ? 'Analyzing…' : 'Get Final Match →'}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {step === 3 && result && (
-        <div className="animate-fadeUp">
-          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '2.5px', color: '#a17a58', textTransform: 'uppercase', marginBottom: '8px' }}>Your Best Match</div>
-            <div style={{ fontSize: '48px', fontFamily: 'var(--font-serif)', color: '#1a1410' }}>{result.asuka_size}</div>
-          </div>
-
-          <div style={{ background: '#f5ede3', padding: '15px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #d4c4b0' }}>
-            <p style={{ fontSize: '12px', color: '#555', lineHeight: 1.7, margin: 0 }} dangerouslySetInnerHTML={{ __html: result.reasoning || '' }} />
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: '#999', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Confidence Score</span>
-            <div style={{ flex: 1, height: '4px', background: '#e8e0d6', borderRadius: '2px' }}>
-              <div className="animate-fillBar" style={{ height: '100%', background: '#a17a58', borderRadius: '2px', width: `${Math.round((result.confidence || 0.88) * 100)}%` }} />
-            </div>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: '#a17a58', fontWeight: 600 }}>{Math.round((result.confidence || 0.88) * 100)}%</span>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <button type="button" onClick={() => setStep(1)} style={{ width: '100%', padding: '13px', background: 'none', border: '1px solid #a17a58', color: '#a17a58', fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '2px', textTransform: 'uppercase', cursor: 'pointer', borderRadius: '4px' }}>Start Over</button>
-            <button type="button" onClick={() => window.open(`https://wa.me/919063356542?text=${encodeURIComponent(`Namaste! My Fit Finder result is Asuka ${result.asuka_size}. I'd like to book a sizing chat for my ${pt}.`)}`, '_blank')} style={{ width: '100%', padding: '13px', background: '#a17a58', color: '#fff', border: 'none', fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '2px', textTransform: 'uppercase', cursor: 'pointer', borderRadius: '4px' }}>Book Sizing Chat (WhatsApp) →</button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
@@ -478,53 +312,121 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
 }
 
 /* ══════════════════════════
+   SIZER PANEL
+══════════════════════════ */
+export function SizerPanel() {
+  const [step, setStep] = useState(1);
+  const [brand, setBrand] = useState('');
+  const [type, setType] = useState('shirt');
+  const [size, setSize] = useState('');
+  const [result, setResult] = useState<any>(null);
+
+  const brands = ['Zara', 'H&M', 'Raymond', 'Manyavar', 'Louis Philippe'];
+  const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
+
+  const handleCalculate = () => {
+    // Simple mock logic for the panel version
+    const mapped = size === 'M' ? '40' : size === 'L' ? '42' : 'Custom';
+    setResult({ primary: mapped, confidence: 'High' });
+    setStep(2);
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '20px', background: 'white' }}>
+      {step === 1 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '10px', color: '#999', marginBottom: '8px', textTransform: 'uppercase' }}>Select Brand</label>
+            <select value={brand} onChange={e => setBrand(e.target.value)} style={{ width: '100%', padding: '12px', border: '1px solid #eee', outline: 'none' }}>
+              <option value="">Select Brand</option>
+              {brands.map(b => <option key={b} value={b}>{b}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '10px', color: '#999', marginBottom: '8px' }}>SELECT SIZE</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {sizes.map(s => (
+                <button key={s} onClick={() => setSize(s)} style={{ width: '45px', height: '45px', border: '1px solid #eee', background: size === s ? '#1a1410' : 'white', color: size === s ? 'white' : '#1a1410', fontSize: '12px' }}>{s}</button>
+              ))}
+            </div>
+          </div>
+          <button onClick={handleCalculate} disabled={!brand || !size} style={{ marginTop: '10px', padding: '15px', background: '#1a1410', color: 'white', border: 'none', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '2px' }}>Map to Asuka →</button>
+        </div>
+      ) : (
+        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+          <div style={{ fontSize: '10px', color: '#a17a58', marginBottom: '10px', textTransform: 'uppercase' }}>Your Asuka Size</div>
+          <div style={{ fontSize: '64px', fontWeight: 300, color: '#1a1410', marginBottom: '20px' }}>{result.primary}</div>
+          <button onClick={() => setStep(1)} style={{ fontSize: '10px', color: '#999', background: 'none', border: 'none', textDecoration: 'underline' }}>RESET</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════
    MAIN WIDGET
 ══════════════════════════ */
-export default function AIWidget({ initialTab = 'style', isFloating = false }: { initialTab?: Tab, isFloating?: boolean }) {
+/* ── ICONS ── */
+const Sparkles = ({ className }: { className?: string }) => (
+  <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /><path d="M5 3v4" /><path d="M19 17v4" /><path d="M3 5h4" /><path d="M17 19h4" /></svg>
+)
+const X = ({ className }: { className?: string }) => (
+  <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+)
+const Send = ({ className }: { className?: string }) => (
+  <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" /></svg>
+)
+const UserIcon = ({ className }: { className?: string }) => (
+  <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+)
+const RefreshCw = ({ className }: { className?: string }) => (
+  <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M3 21v-5h5" /></svg>
+)
+const Ruler = ({ className }: { className?: string }) => (
+  <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.3 15.3l-5-5L3.7 22.9l5 5L21.3 15.3z" /><path d="M7.5 19l2-2" /><path d="M10.5 16l2-2" /><path d="M13.5 13l2-2" /><path d="M5.5 17.5l-2-2" /></svg>
+)
+const Scissors = ({ className }: { className?: string }) => (
+  <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><path d="M20 4L8.12 15.88" /><path d="M14.47 14.48L20 20" /><path d="M8.12 8.12L12 12" /></svg>
+)
+
+/* ── MAIN WIDGET ══════════════════════════ */
+export default function AIWidget({ isFloating = false }: { isFloating?: boolean }) {
   const [open, setOpen] = useState(false)
-  const [persona, setPersona] = useState<Tab>(initialTab)
+  const pathname = usePathname()
+
+  useEffect(() => {
+    setOpen(false)
+  }, [pathname])
 
   useEffect(() => {
     if (!isFloating) return
     const handler = (e: any) => {
       setOpen(true)
-      if (e.detail?.tab) setPersona(e.detail.tab)
     }
     window.addEventListener('openAsukaPanel', handler)
     return () => window.removeEventListener('openAsukaPanel', handler)
   }, [isFloating])
 
+  if (pathname === '/make-it-yourself') {
+    return null;
+  }
+
   const widgetContent = (
     <div className={`w-full flex flex-col bg-[#FAF6F1] overflow-hidden ${isFloating ? 'h-full sm:rounded-2xl' : 'border border-[#d4c4b0] shadow-sm rounded-xl min-h-[500px]'}`}>
-      {/* Tab Switcher / Header */}
-      <div className="flex items-center bg-[#f5ede3] border-b border-[#d4c4b0] flex-shrink-0">
-        {(['style', 'sizer'] as Tab[]).map(t => (
-          <button
-            key={t}
-            onClick={() => setPersona(t)}
-            className={`flex-1 py-3 sm:py-4 px-2 text-[8px] sm:text-[9px] font-mono tracking-[1.5px] uppercase transition-all border-b-2 ${persona === t ? 'border-[#a17a58] text-[#a17a58] font-bold bg-white/30' : 'border-transparent text-[#999] hover:text-[#a17a58]'}`}
-          >
-            {t === 'style' ? 'AI Stylist' : 'Fit Finder'}
-          </button>
-        ))}
+      <div className="flex items-center justify-center bg-[#f5ede3] border-b border-[#d4c4b0] flex-shrink-0 h-[50px] sm:h-[60px]">
+        <span className="text-[9px] sm:text-[10px] font-mono tracking-[3px] uppercase text-[#a17a58] font-bold">
+          AI Personal Stylist
+        </span>
       </div>
 
-      {/* Body */}
       <div className="flex-1 flex flex-col overflow-hidden relative" style={{ minHeight: 0 }}>
-        {persona === 'sizer' ? (
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6" style={{ WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain' }}>
-            <SizerPanel />
-          </div>
-        ) : (
-          <ChatPanel
-            key={persona}
-            endpoint="/api/stylist"
-            persona="style"
-            showPreview={false}
-            quickPrompts={['Wedding guest', 'Groom · sangeet', 'Office ethnic', 'Beach wedding', 'Eid look', 'Diwali party']}
-            systemHeight={isFloating ? 240 : 300}
-          />
-        )}
+        <ChatPanel
+          endpoint="/api/stylist"
+          persona="style"
+          showPreview={false}
+          quickPrompts={['Wedding guest', 'Groom · sangeet', 'Office ethnic', 'Beach wedding', 'Eid look', 'Diwali party']}
+          systemHeight={isFloating ? 240 : 300}
+        />
       </div>
     </div>
   )
@@ -533,27 +435,54 @@ export default function AIWidget({ initialTab = 'style', isFloating = false }: {
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className={`animate-fadeUp fixed bottom-5 left-4 sm:bottom-7 sm:left-7 z-[9998] flex items-center gap-3 cursor-pointer hover:scale-[1.02] transition-transform duration-300 ${open ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-        aria-label="Open AI Assistant"
-      >
-        <div className="relative w-[48px] h-[48px] sm:w-[56px] sm:h-[56px] bg-white rounded-full flex items-center justify-center shadow-[0_4px_14px_rgba(0,0,0,0.15)] ring-1 ring-black/5">
-          <img src="https://asukacouture.com/cdn/shop/files/Untitled_design_70x.png" alt="Asuka Chat" className="w-[24px] h-[24px] sm:w-[30px] sm:h-[30px] object-contain opacity-90" />
-          <div className="absolute -top-1 -right-1 w-[18px] h-[18px] sm:w-[22px] sm:h-[22px] bg-[#1a1410] text-[#a17a58] text-[9px] sm:text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">
-            1
-          </div>
+      {/* Floating Action Button Stack */}
+      {!open && (
+        <div className="fixed bottom-5 right-4 sm:bottom-7 sm:right-7 z-[9998] flex flex-col gap-3 items-end">
+
+          {/* 1. AI SIZER (Opens modal if on product, otherwise link to sizer page) */}
+          <button
+            onClick={() => {
+              // Priority: Trigger current page sizer modal if it exists
+              window.dispatchEvent(new CustomEvent('openAsukaPanel', { detail: { tab: 'sizer' } }));
+            }}
+            className="bg-white/90 backdrop-blur-xl text-[#1a1410] w-[48px] h-[48px] sm:w-[56px] sm:h-[56px] rounded-full flex items-center justify-center shadow-[0_4px_14px_rgba(0,0,0,0.15)] ring-1 ring-black/5 hover:scale-110 transition-all group relative border border-[#a17a58]/20"
+          >
+            <Ruler className="w-5 h-5 sm:w-6 sm:h-6 text-[#a17a58]" />
+            {/* Tooltip on hover */}
+            <span className="absolute right-full mr-3 bg-[#1a1410] text-white text-[9px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap tracking-widest font-mono pointer-events-none">AI SIZER</span>
+          </button>
+
+          {/* 2. AI ATELIER (Link to MIY) */}
+          <Link
+            href="/make-it-yourself"
+            className="bg-white/90 backdrop-blur-xl text-[#1a1410] w-[48px] h-[48px] sm:w-[56px] sm:h-[56px] rounded-full flex items-center justify-center shadow-[0_4px_14px_rgba(0,0,0,0.15)] ring-1 ring-black/5 hover:scale-110 transition-all group relative border border-[#a17a58]/20"
+          >
+            <Scissors className="w-5 h-5 sm:w-6 sm:h-6 text-[#a17a58]" />
+            <span className="absolute right-full mr-3 bg-[#1a1410] text-white text-[9px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap tracking-widest font-mono pointer-events-none">AI ATELIER</span>
+          </Link>
+
+          {/* 3. AI ASSISTANT (Opens the panel) */}
+          <button
+            onClick={() => setOpen(true)}
+            className="group flex items-center gap-3 cursor-pointer hover:scale-[1.02] transition-transform duration-300"
+            aria-label="Open AI Assistant"
+          >
+            <div className="bg-white px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.1)] text-[#1a1410] font-sans font-medium text-[12px] sm:text-[13px] flex items-center gap-1 sm:gap-2 border border-[#a17a58]/20">
+              Chat with us <span className="text-sm sm:text-lg">👋</span>
+            </div>
+            <div className="relative w-[48px] h-[48px] sm:w-[56px] sm:h-[56px] bg-[#1a1410] rounded-full flex items-center justify-center shadow-[0_4px_14px_rgba(0,0,0,0.15)] ring-1 ring-[#a17a58]/30">
+              <Sparkles className="w-[24px] h-[24px] sm:w-[30px] sm:h-[30px] text-[#a17a58] animate-pulse" />
+              <div className="absolute -top-1 -right-1 w-[18px] h-[18px] sm:w-[22px] sm:h-[22px] bg-[#a17a58] text-white text-[9px] sm:text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-[#1a1410]">
+                1
+              </div>
+            </div>
+          </button>
         </div>
-        <div className="bg-white px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.1)] text-[#1a1410] font-sans font-medium text-[12px] sm:text-[13px] flex items-center gap-1 sm:gap-2">
-          Chat with us <span className="text-sm sm:text-lg">👋</span>
-        </div>
-      </button>
+      )}
 
       {open && (
         <>
-          {/* Mobile Overlay */}
           <div className="fixed inset-0 bg-black/40 z-[9998] sm:hidden animate-fadeIn" onClick={() => setOpen(false)} />
-          {/* Mobile vs Desktop Floating Wrapper - Clean Bottom Sheet Style */}
           <div className="fixed bottom-0 left-0 right-0 sm:right-auto sm:left-7 sm:bottom-24 z-[9999] w-full sm:w-[380px] h-[85vh] sm:h-[600px] max-h-[85vh] flex flex-col animate-panelOpen shadow-[0_-10px_40px_rgba(0,0,0,0.15)] sm:shadow-2xl rounded-t-2xl sm:rounded-2xl overflow-hidden border border-[#e0d5c8] bg-white sm:mt-0">
             <button onClick={() => setOpen(false)} className="absolute top-2 right-2 sm:top-4 sm:right-4 z-[100] w-8 h-8 flex items-center justify-center bg-[#f5ede3] rounded-full text-[#a17a58] hover:bg-[#a17a58] hover:text-white transition-colors">✕</button>
             {widgetContent}

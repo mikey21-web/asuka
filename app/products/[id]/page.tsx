@@ -8,6 +8,8 @@ import Link from 'next/link'
 import { getProductByHandle } from '@/lib/catalog'
 import { formatPrice } from '@/lib/site-data'
 
+import ProductSizerModal from '@/components/ai/ProductSizerModal'
+
 const TEAL = '#008b8b'
 const ETHNIC_BROWN = '#8f654d'
 const DARK_INK = '#1a1410'
@@ -19,6 +21,7 @@ export default function ProductPage() {
     const product = getProductByHandle(handle)
     const [selectedSize, setSelectedSize] = useState('XS')
     const [mainImgIdx, setMainImgIdx] = useState(0)
+    const [sizerOpen, setSizerOpen] = useState(false)
 
     // Category detection: shirts, co-ord, tuxedo, suits, jackets = Western
     const isWestern = handle.includes('shirt') || handle.includes('suit') || handle.includes('jacket') || handle.includes('tuxedo') || handle.includes('co-ord') || handle.includes('western')
@@ -35,8 +38,8 @@ export default function ProductPage() {
         <div className="bg-white min-h-screen text-[#1a1410]">
             <Header />
 
-            {/* Breadcrumb - Clean & Light */}
-            <div className="px-5 py-4 sm:px-10 text-[11px] uppercase tracking-[1.5px] font-mono text-[#888] flex items-center gap-2">
+            {/* Breadcrumb - Clean & Light with top padding for header clearance */}
+            <div className="pt-[80px] sm:pt-[100px] px-5 py-4 sm:px-10 text-[11px] uppercase tracking-[1.5px] font-mono text-[#888] flex items-center gap-2">
                 <Link href="/" className="hover:text-black transition-colors">Home</Link>
                 <span>/</span>
                 <span className="text-black truncate max-w-[200px]">{product.title}</span>
@@ -126,12 +129,6 @@ export default function ProductPage() {
                                     Download size chart for offline visit
                                 </button>
                             </div>
-                            <button
-                                onClick={() => window.dispatchEvent(new CustomEvent('openAsukaPanel', { detail: { tab: 'sizer' } }))}
-                                className="mt-4 flex items-center gap-2 text-[10px] font-mono tracking-[2px] uppercase text-[#a17a58] hover:opacity-70 transition-all border-b border-[#a17a58]/30 pb-1 w-fit"
-                            >
-                                <span className="text-sm">✦</span> Find My Size with AI
-                            </button>
                         </div>
 
                         {/* CTA Buttons */}
@@ -141,6 +138,12 @@ export default function ProductPage() {
                             </button>
                             <button className={`w-full py-4 ${isWestern ? 'bg-[#008b8b]' : 'bg-black'} text-white text-[12px] font-mono tracking-[3px] uppercase font-bold hover:opacity-90 transition-all`}>
                                 Buy It Now
+                            </button>
+                            <button
+                                onClick={() => setSizerOpen(true)}
+                                className={`w-full py-3 border border-[#a17a58] text-[#a17a58] text-[11px] font-mono tracking-[2px] uppercase hover:bg-[#faf7f2] transition-colors my-2`}
+                            >
+                                ✦ Find My Size with AI
                             </button>
                             <Link
                                 href="/make-it-yourself"
@@ -175,6 +178,7 @@ export default function ProductPage() {
             </main>
 
             <Footer />
+            <ProductSizerModal isOpen={sizerOpen} onClose={() => setSizerOpen(false)} />
         </div>
     )
 }

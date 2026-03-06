@@ -20,9 +20,9 @@ export default function Home() {
       <main style={{ background: 'white', minHeight: '100vh' }}>
 
         {/* ═══ 1. SPLIT HERO (Exactly matching live site) ═══ */}
-        <section className="relative h-screen w-full flex flex-col md:flex-row overflow-hidden bg-black gap-0">
+        <section className="relative w-full flex flex-col md:flex-row overflow-hidden bg-black gap-0">
           {/* LEFT: ETHNIC WEAR */}
-          <Link href="/ethnic-home" className="relative flex-1 group overflow-hidden block w-full h-full">
+          <Link href="/ethnic-home" className="relative flex-1 group overflow-hidden block w-full min-h-[80vh] md:h-screen">
             <Image
               src={HERO_ETHNIC}
               alt="Ethnic Wear"
@@ -36,31 +36,10 @@ export default function Home() {
             </div>
             {/* Minimal gradient for text contrast only */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-80 pointer-events-none" />
-
-            <div className="absolute bottom-[40px] md:bottom-[60px] w-full text-center px-4">
-              <h2 className="font-serif italic text-white text-[32px] sm:text-[40px] md:text-[54px] font-normal tracking-[4px] m-0" style={{ textShadow: '2px 4px 12px rgba(0,0,0,0.5)' }}>
-                ETHNIC WEAR
-              </h2>
-              <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
-                <button
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.dispatchEvent(new CustomEvent('openAsukaPanel', { detail: { tab: 'sizer' } })) }}
-                  className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-6 py-2.5 text-[10px] uppercase font-mono tracking-[2px] transition-all hover:bg-white hover:text-black"
-                >
-                  AI Sizer
-                </button>
-                <Link
-                  href="/make-it-yourself"
-                  className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-6 py-2.5 text-[10px] uppercase font-mono tracking-[2px] transition-all hover:bg-white hover:text-black no-underline"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  AI Atelier
-                </Link>
-              </div>
-            </div>
           </Link>
 
           {/* RIGHT: WESTERN WEAR */}
-          <Link href="/western-home" className="relative flex-1 group overflow-hidden block w-full h-full md:border-l-[0.5px] md:border-white/20">
+          <Link href="/western-home" className="relative flex-1 group overflow-hidden block w-full min-h-[80vh] md:h-screen md:border-l-[0.5px] md:border-white/20">
             <Image
               src={HERO_WESTERN}
               alt="Western Wear"
@@ -74,27 +53,6 @@ export default function Home() {
             </div>
             {/* Minimal gradient for text contrast only */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-80 pointer-events-none" />
-
-            <div className="absolute bottom-[40px] md:bottom-[60px] w-full text-center px-4">
-              <h2 className="font-serif italic text-white text-[32px] sm:text-[40px] md:text-[54px] font-normal tracking-[4px] m-0" style={{ textShadow: '2px 4px 12px rgba(0,0,0,0.5)' }}>
-                WESTERN WEAR
-              </h2>
-              <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
-                <button
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.dispatchEvent(new CustomEvent('openAsukaPanel', { detail: { tab: 'sizer' } })) }}
-                  className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-6 py-2.5 text-[10px] uppercase font-mono tracking-[2px] transition-all hover:bg-white hover:text-black"
-                >
-                  AI Sizer
-                </button>
-                <Link
-                  href="/make-it-yourself"
-                  className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-6 py-2.5 text-[10px] uppercase font-mono tracking-[2px] transition-all hover:bg-white hover:text-black no-underline"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  AI Atelier
-                </Link>
-              </div>
-            </div>
           </Link>
         </section>
 

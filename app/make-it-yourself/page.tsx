@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 
@@ -22,391 +22,441 @@ export default function MakeItYourself() {
     // Step 1: Occasion & Vibe
     const [occasion, setOccasion] = useState('Wedding Guest')
     const [location, setLocation] = useState('Indoor')
+    const [city, setCity] = useState('')
     const [time, setTime] = useState('Evening')
-    const [vibe, setVibe] = useState(50) // 0: Classic/Minimal, 100: Bold/Embellished
-    const [colors, setColors] = useState('Navy, Emerald, Black')
-    const [avoidColors, setAvoidColors] = useState('Red, Orange')
-    const [budget, setBudget] = useState('₹40k - ₹80k')
+    const [vibe, setVibe] = useState(50) // 0: Classic, 100: Bold
+    const [colors, setColors] = useState('Navy, Emerald')
+    const [avoidColors, setAvoidColors] = useState('Yellow')
+    const [budget, setBudget] = useState('₹50k - ₹1L')
 
     // Step 2: Personal Inputs
-    const [hw, setHw] = useState('')
+    const [height, setHeight] = useState('')
+    const [weight, setWeight] = useState('')
     const [skin, setSkin] = useState('Medium')
-    const [fit, setFit] = useState('Slim')
-    const [ownedItems, setOwnedItems] = useState('Black patent leather shoes')
+    const [fit, setFit] = useState('Slim Tailored')
+    const [ownedItems, setOwnedItems] = useState('')
 
     // Step 3: Chat & AI Looks
     const [msg, setMsg] = useState('')
     const [loading, setLoading] = useState(false)
     const [looks, setLooks] = useState<Look[]>([])
     const [chatLog, setChatLog] = useState<{ role: string, content: string }[]>([])
+    const [imagePrompt, setImagePrompt] = useState<string | null>(null)
 
-    // Step 4: Concept Img & Customize
+    // Step 4: Concept Img
     const [selectedLook, setSelectedLook] = useState<Look | null>(null)
+    const [conceptImg, setConceptImg] = useState<string | null>(null)
+    const [imgLoading, setImgLoading] = useState(false)
+
+    // Step 5: Customize & Handover
     const [lapel, setLapel] = useState('Peak Satin Lapel')
     const [buttons, setButtons] = useState('Fabric Covered')
-    const [embroidery, setEmbroidery] = useState('Subtle Threadwork on Collar')
+    const [embroidery, setEmbroidery] = useState('Subtle Threadwork')
     const [lining, setLining] = useState('Printed Silk')
     const [monogram, setMonogram] = useState('')
-    const [imgLoaded, setImgLoaded] = useState(false)
 
     const chatEndRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
-        if (step === 3 && chatLog.length > 0) {
-            chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-        }
-    }, [chatLog.length, loading, looks.length, step])
+        if (step === 3) chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, [chatLog, loading, step])
 
-    const handleFetchLooks = async () => {
+    const handleChat = async () => {
         if (!msg.trim()) return
         setLoading(true)
-        const currentMsg = { role: 'user', content: msg }
-        setChatLog(prev => [...prev, currentMsg])
+        const userMsg = { role: 'user', content: msg }
+        setChatLog(prev => [...prev, userMsg])
         setMsg('')
-
-        const payload = {
-            inputs: { occasion, location, time, vibe, colors, avoidColors, budget, hw, skin, fit, ownedItems },
-            message: msg,
-            history: chatLog
-        }
 
         try {
             const res = await fetch('/api/miy-chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({
+                    inputs: { occasion, location, city, time, vibe, colors, avoidColors, budget, height, weight, skin, fit, ownedItems },
+                    message: msg,
+                    history: chatLog
+                })
             })
             const data = await res.json()
-            setChatLog(prev => [...prev, { role: 'assistant', content: data.message || "I've curated some designs." }])
-            if (data.looks?.length > 0) setLooks(data.looks)
+            setChatLog(prev => [...prev, { role: 'assistant', content: data.message }])
+            if (data.looks) setLooks(data.looks)
+            if (data.image_prompt) setImagePrompt(data.image_prompt)
         } catch (err) {
-            setChatLog(prev => [...prev, { role: 'assistant', content: "My apologies, I couldn't reach the atelier." }])
+            setChatLog(prev => [...prev, { role: 'assistant', content: "My apologies, the atelier is currently busy. Could we try that again?" }])
         }
         setLoading(false)
     }
 
-    const InputStyle = {
-        width: '100%', padding: '14px', border: '1px solid #ddd', outline: 'none',
-        fontFamily: 'var(--font-sans)', fontSize: '14px', marginBottom: '16px', background: '#fafafa', borderRadius: '4px'
+    const generateConcept = async (look: Look) => {
+        setSelectedLook(look)
+        setStep(4)
+        setImgLoading(true)
+
+        // Generate via Pollinations/Flux for better conceptual quality
+        const prompt = imagePrompt || `luxury ${look.name} outfit, ${look.direction}, ${look.fabric_notes}, editorial fashion photography, studio background, 8k`
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1344&nologo=true&seed=${Date.now()}`
+
+        // Preload image
+        const img = new Image()
+        img.src = url
+        img.onload = () => {
+            setConceptImg(url)
+            setImgLoading(false)
+        }
     }
-    const LabelStyle = { display: 'block', fontFamily: 'var(--font-sans)', fontSize: '12px', letterSpacing: '1px', textTransform: 'uppercase' as const, color: BRAND_COPPER, marginBottom: '8px', fontWeight: 500 }
 
-    const finalizeBriefString = () => {
-        return `Namaste! My Make-It-Yourself Design Brief:
+    const finalizeBrief = () => {
+        return `Namaste! My Bespoke Design Brief:
+--------------------------------
+OCCASION: ${occasion} in ${city || 'Indoors'}
+VIBE: ${vibe < 40 ? 'Classic' : vibe > 60 ? 'Bold' : 'Balanced'}
+BUDGET: ${budget}
+COLORS: ${colors} (Avoid: ${avoidColors})
 
-**OCCASION & VIBE**
-- Occasion: ${occasion} (${location}, ${time})
-- Vibe: ${vibe < 40 ? 'Classic/Minimal' : vibe > 60 ? 'Bold/Embellished' : 'Balanced'}
-- Preffered Colors: ${colors} (Avoid: ${avoidColors})
-- Budget Limit: ${budget}
+CLIENT: ${height}/${weight} | ${skin} skin | ${fit} fit
+OWNING: ${ownedItems || 'None mentioned'}
 
-**PERSONAL INPUTS**
-- Fit: ${fit} | Skin: ${skin} | H/W: ${hw}
-- Owning: ${ownedItems}
+CHOSEN LOOK: ${selectedLook?.name}
+DETAILS: ${lapel}, ${buttons} buttons, ${embroidery} embroidery, ${lining} lining.
+MONOGRAM: ${monogram || 'None'}
 
-**CHOSEN LOOK**: ${selectedLook?.name}
-- Direction: ${selectedLook?.direction}
-- Fabric: ${selectedLook?.fabric_notes}
-
-**CUSTOMIZATIONS**
-- Lapel: ${lapel} | Buttons: ${buttons}
-- Embroidery: ${embroidery}
-- Lining: ${lining}
-- Monogram: ${monogram || 'None'}
-
-Please connect me with a Master Tailor to finalize sizing and production.`
+Please connect me with a tailor to finalize.`
     }
+
+    const inputClasses = "w-full border-b border-gray-200 py-3 bg-transparent outline-none focus:border-[#a17a58] transition-colors text-sm font-light placeholder:text-gray-300"
+    const labelClasses = "block text-[10px] uppercase tracking-[2px] text-[#a17a58] mb-1 font-medium"
 
     return (
-        <>
+        <div className="min-h-screen bg-[#fffdfd] transition-all duration-700">
             <Header />
-            <main style={{ minHeight: '100vh', background: BG_CREAM, paddingTop: '100px', paddingBottom: '100px' }}>
-                <div style={{ maxWidth: '800px', margin: '0 auto', background: 'white', border: `1px solid ${BRAND_COPPER}`, boxShadow: '0 20px 40px rgba(0,0,0,0.06)' }}>
-                    {/* Header */}
-                    <div style={{ padding: '40px', textAlign: 'center', borderBottom: '1px solid #eee' }}>
-                        <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: '36px', fontWeight: 300, color: BRAND_INK, letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '10px' }}>Make It Yourself</h1>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+
+            <main className="pt-40 pb-20 px-4">
+                <div className="max-w-4xl mx-auto">
+
+                    {/* Progress Header */}
+                    <div className="text-center mb-16">
+                        <span className="text-[10px] uppercase tracking-[4px] text-[#a17a58] mb-4 block">Asuka Atelier</span>
+                        <h1 className="text-3xl md:text-4xl font-serif text-[#1a1410] mb-8 font-light italic">Make It Yourself</h1>
+                        <div className="flex justify-center items-center gap-2 md:gap-4">
                             {[1, 2, 3, 4, 5].map(s => (
-                                <div key={s} style={{ width: '30px', height: '3px', background: step >= s ? BRAND_COPPER : '#eee', transition: 'all 0.3s' }} />
+                                <div key={s} className="flex items-center gap-2 md:gap-4">
+                                    <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full border flex items-center justify-center text-[8px] md:text-[10px] transition-all duration-500 ${step >= s ? 'bg-[#1a1410] border-[#1a1410] text-white shadow-lg' : 'border-gray-200 text-gray-400'}`}>
+                                        {s}
+                                    </div>
+                                    {s < 5 && <div className={`w-4 md:w-8 h-[1px] ${step > s ? 'bg-[#1a1410]' : 'bg-gray-200'}`} />}
+                                </div>
                             ))}
                         </div>
-                        <p style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', letterSpacing: '2px', color: '#888', textTransform: 'uppercase', marginTop: '16px' }}>Step {step} of 5</p>
                     </div>
 
-                    <div style={{ padding: '40px' }}>
-                        {/* STEP 1 */}
+                    <div className="bg-white p-8 md:p-12 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.05)] border border-gray-100 rounded-sm min-h-[500px] relative overflow-hidden">
+
+                        {/* Step 1: Occasion & Vibe */}
                         {step === 1 && (
-                            <div className="animate-fadeUp">
-                                <h3 style={{ fontFamily: 'var(--font-sans)', fontSize: '22px', fontWeight: 400, marginBottom: '24px', color: BRAND_INK }}>The Occasion & Vibe</h3>
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                                <div className="grid md:grid-cols-2 gap-x-12 gap-y-8">
+                                    <div className="space-y-6">
+                                        <h2 className="text-xl font-serif italic mb-6">The Occasion</h2>
+                                        <div>
+                                            <label className={labelClasses}>What is the Event?</label>
+                                            <select className={inputClasses} value={occasion} onChange={e => setOccasion(e.target.value)}>
+                                                {['Wedding Guest', 'Groom', 'Cocktail', 'Reception', 'Engagement', 'Corporate', 'Festive'].map(o => <option key={o}>{o}</option>)}
+                                            </select>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className={labelClasses}>Location</label>
+                                                <select className={inputClasses} value={location} onChange={e => setLocation(e.target.value)}>
+                                                    {['Indoor', 'Outdoor', 'Beach', 'Mountain'].map(o => <option key={o}>{o}</option>)}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className={labelClasses}>City</label>
+                                                <input className={inputClasses} placeholder="e.g. Jaipur" value={city} onChange={e => setCity(e.target.value)} />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className={labelClasses}>Time of Day</label>
+                                            <div className="flex gap-2 mt-2">
+                                                {['Day', 'Night'].map(t => (
+                                                    <button key={t} onClick={() => setTime(t)} className={`flex-1 py-3 text-[10px] uppercase tracking-widest border transition-all ${time === t ? 'bg-[#1a1410] text-white border-[#1a1410]' : 'border-gray-200 text-gray-400 hover:border-[#a17a58]'}`}>
+                                                        {t}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
 
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                                    <div>
-                                        <label style={LabelStyle}>Occasion</label>
-                                        <select style={InputStyle} value={occasion} onChange={e => setOccasion(e.target.value)}>
-                                            {['Wedding Guest', 'Groom', 'Cocktail', 'Reception', 'Engagement', 'Corporate', 'Festive'].map(o => <option key={o}>{o}</option>)}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label style={LabelStyle}>Budget Range</label>
-                                        <select style={InputStyle} value={budget} onChange={e => setBudget(e.target.value)}>
-                                            {['₹30,000 - ₹50,000', '₹50,000 - ₹1,00,000', '₹1,00,000 - ₹2,50,000', '₹2,50,000+'].map(o => <option key={o}>{o}</option>)}
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                                    <div>
-                                        <label style={LabelStyle}>Location / Weather</label>
-                                        <select style={InputStyle} value={location} onChange={e => setLocation(e.target.value)}>
-                                            {['Indoor (AC)', 'Outdoor (Summer)', 'Outdoor (Winter)', 'Destination (Beach)'].map(o => <option key={o}>{o}</option>)}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label style={LabelStyle}>Time of Day</label>
-                                        <select style={InputStyle} value={time} onChange={e => setTime(e.target.value)}>
-                                            {['Morning', 'Afternoon', 'Evening', 'Late Night'].map(o => <option key={o}>{o}</option>)}
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div style={{ marginBottom: '24px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-sans)', fontSize: '12px', letterSpacing: '1px', textTransform: 'uppercase', color: BRAND_COPPER, marginBottom: '8px', fontWeight: 500 }}>
-                                        <span>Classic & Minimal</span>
-                                        <span>Vibe</span>
-                                        <span>Bold & Embellished</span>
-                                    </div>
-                                    <input type="range" min="0" max="100" value={vibe} onChange={e => setVibe(Number(e.target.value))} style={{ width: '100%', accentColor: BRAND_COPPER }} />
-                                </div>
-
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                                    <div>
-                                        <label style={LabelStyle}>Preferred Colors</label>
-                                        <input style={InputStyle} value={colors} onChange={e => setColors(e.target.value)} placeholder="e.g. Ivory, Navy, Sage Green" />
-                                    </div>
-                                    <div>
-                                        <label style={LabelStyle}>Colors to Avoid</label>
-                                        <input style={InputStyle} value={avoidColors} onChange={e => setAvoidColors(e.target.value)} placeholder="e.g. Yellow, Bright Red" />
-                                    </div>
-                                </div>
-
-                                <button type="button" onClick={() => setStep(2)} style={{ width: '100%', padding: '16px', background: BRAND_INK, color: 'white', fontFamily: 'var(--font-sans)', letterSpacing: '2px', textTransform: 'uppercase', border: 'none', marginTop: '20px', cursor: 'pointer', zIndex: 10, position: 'relative' }}>Next: Personal Inputs →</button>
-                            </div>
-                        )}
-
-                        {/* STEP 2 */}
-                        {step === 2 && (
-                            <div className="animate-fadeUp">
-                                <h3 style={{ fontFamily: 'var(--font-sans)', fontSize: '22px', fontWeight: 400, marginBottom: '24px', color: BRAND_INK }}>Personal Attributes</h3>
-
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                                    <div>
-                                        <label style={LabelStyle}>Height / Weight (Optional)</label>
-                                        <input style={InputStyle} value={hw} onChange={e => setHw(e.target.value)} placeholder="e.g. 5'11 / 78kg" />
-                                    </div>
-                                    <div style={{ gridColumn: 'span 2' }}>
-                                        <label style={LabelStyle}>Skin Tone</label>
-                                        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginTop: '10px' }}>
-                                            {[
-                                                { id: 'Fair/Light', color: '#F8E2CF' },
-                                                { id: 'Medium/Wheatish', color: '#E8C19D' },
-                                                { id: 'Olive/Tan', color: '#B07D4F' },
-                                                { id: 'Deep/Dark', color: '#6B4226' }
-                                            ].map(s => (
-                                                <button type="button" key={s.id} onClick={() => setSkin(s.id)} style={{
-                                                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'none', border: 'none'
-                                                }}>
-                                                    <div style={{
-                                                        width: '40px', height: '40px', borderRadius: '50%', background: s.color,
-                                                        border: skin === s.id ? `2px solid ${BRAND_COPPER}` : '1px solid #ddd',
-                                                        outline: skin === s.id ? '2px solid white' : 'none', outlineOffset: '-4px',
-                                                        transition: 'all 0.2s'
-                                                    }} />
-                                                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: skin === s.id ? BRAND_INK : '#888' }}>{s.id.split('/')[0]}</span>
-                                                </button>
-                                            ))}
+                                    <div className="space-y-6">
+                                        <h2 className="text-xl font-serif italic mb-6">The Aesthetic</h2>
+                                        <div>
+                                            <label className={labelClasses}>Vibe Preference</label>
+                                            <div className="flex justify-between text-[8px] uppercase tracking-tighter text-gray-400 mb-2">
+                                                <span>Minimalist</span>
+                                                <span>Bold</span>
+                                            </div>
+                                            <input type="range" className="w-full h-[2px] bg-gray-200 appearance-none cursor-pointer accent-[#a17a58]" value={vibe} onChange={e => setVibe(Number(e.target.value))} />
+                                        </div>
+                                        <div>
+                                            <label className={labelClasses}>Color Palette</label>
+                                            <input className={inputClasses} placeholder="Preferred colors..." value={colors} onChange={e => setColors(e.target.value)} />
+                                            <input className={inputClasses} placeholder="Colors to avoid..." value={avoidColors} onChange={e => setAvoidColors(e.target.value)} />
+                                        </div>
+                                        <div>
+                                            <label className={labelClasses}>Budget Window</label>
+                                            <select className={inputClasses} value={budget} onChange={e => setBudget(e.target.value)}>
+                                                {['₹30k - ₹50k', '₹50k - ₹1L', '₹1L - ₹2.5L', '₹2.5L+'].map(o => <option key={o}>{o}</option>)}
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
-
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                                    <div>
-                                        <label style={LabelStyle}>Fit Preference</label>
-                                        <select style={InputStyle} value={fit} onChange={e => setFit(e.target.value)}>
-                                            {['Extra Slim', 'Slim Tailored', 'Classic/Regular', 'Relaxed'].map(o => <option key={o}>{o}</option>)}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label style={LabelStyle}>Existing Items to Match</label>
-                                        <input style={InputStyle} value={ownedItems} onChange={e => setOwnedItems(e.target.value)} placeholder="e.g. Gold Watch, Tan Loafers" />
-                                    </div>
-                                </div>
-
-                                <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                                    <button type="button" onClick={() => setStep(1)} style={{ flex: 1, padding: '16px', background: 'transparent', color: BRAND_COPPER, border: `1px solid ${BRAND_COPPER}`, fontFamily: 'var(--font-sans)', letterSpacing: '2px', textTransform: 'uppercase', cursor: 'pointer', zIndex: 10, position: 'relative' }}>← Back</button>
-                                    <button type="button" onClick={() => setStep(3)} style={{ flex: 2, padding: '16px', background: BRAND_INK, color: 'white', fontFamily: 'var(--font-sans)', letterSpacing: '2px', textTransform: 'uppercase', border: 'none', cursor: 'pointer', zIndex: 10, position: 'relative' }}>Talk to AI Designer →</button>
+                                <div className="mt-12 flex justify-end">
+                                    <button onClick={() => setStep(2)} className="bg-[#1a1410] text-white px-12 py-4 text-xs uppercase tracking-[3px] hover:bg-[#a17a58] transition-all flex items-center gap-2 group">
+                                        Personal Inputs <span className="group-hover:translate-x-1 transition-transform">→</span>
+                                    </button>
                                 </div>
                             </div>
                         )}
 
-                        {/* STEP 3 */}
-                        {step === 3 && (
-                            <div className="animate-fadeUp">
-                                <h3 style={{ fontFamily: 'var(--font-sans)', fontSize: '22px', fontWeight: 400, marginBottom: '24px', color: BRAND_INK }}>Atelier Chat</h3>
+                        {/* Step 2: Personal Inputs */}
+                        {step === 2 && (
+                            <div className="animate-in fade-in slide-in-from-right-4 duration-700">
+                                <h2 className="text-2xl font-serif italic mb-8 text-center">Your Canvas</h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                                    <div className="space-y-8">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className={labelClasses}>Height (ft/in)</label>
+                                                <input className={inputClasses} placeholder="e.g. 5'11" value={height} onChange={e => setHeight(e.target.value)} />
+                                            </div>
+                                            <div>
+                                                <label className={labelClasses}>Weight (kg)</label>
+                                                <input className={inputClasses} placeholder="e.g. 78kg" value={weight} onChange={e => setWeight(e.target.value)} />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className={labelClasses}>Skin Tone</label>
+                                            <div className="flex flex-wrap gap-4 mt-4">
+                                                {[
+                                                    { id: 'Fair', color: '#F8E2CF' },
+                                                    { id: 'Medium', color: '#E8C19D' },
+                                                    { id: 'Tan', color: '#B07D4F' },
+                                                    { id: 'Deep', color: '#6B4226' }
+                                                ].map(s => (
+                                                    <button key={s.id} onClick={() => setSkin(s.id)} className="flex flex-col items-center gap-2 group">
+                                                        <div className={`w-10 h-10 rounded-full transition-all border ${skin === s.id ? 'border-[#a17a58] scale-110 shadow-md ring-4 ring-white' : 'border-transparent'}`} style={{ background: s.color }} />
+                                                        <span className={`text-[8px] uppercase tracking-tighter ${skin === s.id ? 'text-[#a17a58] font-bold' : 'text-gray-400'}`}>{s.id}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-8">
+                                        <div>
+                                            <label className={labelClasses}>Fit Preference</label>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                                                {['Extra Slim', 'Slim Tailored', 'Classic', 'Relaxed'].map(f => (
+                                                    <button key={f} onClick={() => setFit(f)} className={`py-3 text-[9px] uppercase tracking-widest border transition-all ${fit === f ? 'bg-[#1a1410] text-white border-[#1a1410]' : 'border-gray-200 text-gray-400 hover:border-[#a17a58]'}`}>
+                                                        {f}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className={labelClasses}>Owned Items to Match</label>
+                                            <input className={inputClasses} placeholder="e.g. Gold watch, brown loafers..." value={ownedItems} onChange={e => setOwnedItems(e.target.value)} />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="mt-16 flex flex-col sm:flex-row justify-between gap-4">
+                                    <button onClick={() => setStep(1)} className="px-8 py-4 text-xs uppercase tracking-[3px] text-gray-400 hover:text-[#a17a58] transition-all order-2 sm:order-1">← Back</button>
+                                    <button onClick={() => setStep(3)} className="bg-[#1a1410] text-white px-12 py-4 text-xs uppercase tracking-[3px] hover:bg-[#a17a58] transition-all order-1 sm:order-2">Talk to AI Designer →</button>
+                                </div>
+                            </div>
+                        )}
 
-                                <div style={{ border: '1px solid #eee', background: '#fafafa', borderRadius: '8px', padding: '24px', height: '400px', overflowY: 'auto', marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                    <div style={{ alignSelf: 'flex-start', maxWidth: '85%', padding: '16px', background: 'white', border: '1px solid #ddd', borderRadius: '4px 16px 16px 16px' }}>
-                                        <p style={{ fontFamily: 'var(--font-sans)', fontSize: '14px', lineHeight: 1.6, color: BRAND_INK, margin: 0 }}>
-                                            Namaste! Based on your occasion ({occasion}) and budget ({budget}), I have a strong foundation for your design. What direction are you leaning towards?
-                                            <br /><br /><span style={{ color: '#888' }}>e.g. "I want something dark, sexy, starlit vibe but not too loud."</span>
+                        {/* Step 3: Chat */}
+                        {step === 3 && (
+                            <div className="animate-in fade-in scale-in-95 duration-700 h-full flex flex-col">
+                                <div className="text-center mb-6">
+                                    <h2 className="text-xl font-serif italic mb-2 text-[#1a1410]">Conversational Curator</h2>
+                                    <p className="text-[10px] uppercase tracking-widest text-[#a17a58]">Designing for your {occasion}...</p>
+                                </div>
+
+                                <div className="flex-1 min-h-[400px] border border-gray-100 bg-[#fafafa]/50 rounded-lg p-6 overflow-y-auto mb-6 flex flex-col gap-4">
+                                    <div className="bg-white p-4 rounded-lg border border-gray-100 max-w-[85%] self-start shadow-sm transition-all duration-500">
+                                        <p className="text-sm font-light leading-relaxed text-gray-700">
+                                            Namaste! I have your preferences. A {occasion} in Jaipur calls for something truly special. What specific mood or celebrity inspiration do you have in mind?
                                         </p>
                                     </div>
 
                                     {chatLog.map((m, i) => (
-                                        <div key={i} style={{ alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '85%', padding: '16px', background: m.role === 'user' ? BRAND_INK : 'white', color: m.role === 'user' ? 'white' : BRAND_INK, border: m.role === 'user' ? 'none' : '1px solid #ddd', borderRadius: m.role === 'user' ? '16px 16px 4px 16px' : '4px 16px 16px 16px' }}>
-                                            <p style={{ fontFamily: 'var(--font-sans)', fontSize: '14px', lineHeight: 1.6, margin: 0 }}>{m.content}</p>
+                                        <div key={i} className={`p-4 rounded-lg text-sm font-light leading-relaxed max-w-[85%] shadow-sm transition-all duration-500 ${m.role === 'user' ? 'bg-[#1a1410] text-white self-end' : 'bg-white border border-gray-100 text-gray-700 self-start'}`}>
+                                            {m.content}
                                         </div>
                                     ))}
 
                                     {loading && (
-                                        <div style={{ alignSelf: 'flex-start', maxWidth: '85%', padding: '16px', background: 'white', border: '1px solid #ddd', borderRadius: '4px 16px 16px 16px' }}>
-                                            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', color: '#888', letterSpacing: '1px' }}>CURATING LOOKS...</span>
+                                        <div className="self-start bg-white p-4 rounded-lg border border-gray-100 animate-pulse flex items-center gap-2">
+                                            <div className="w-1 h-1 bg-[#a17a58] rounded-full animate-bounce" />
+                                            <div className="w-1 h-1 bg-[#a17a58] rounded-full animate-bounce [animation-delay:0.2s]" />
+                                            <div className="w-1 h-1 bg-[#a17a58] rounded-full animate-bounce [animation-delay:0.4s]" />
+                                            <span className="text-[10px] uppercase tracking-widest text-[#a17a58] ml-2 font-medium">Atelier is thinking...</span>
                                         </div>
                                     )}
 
                                     {looks.length > 0 && (
-                                        <div style={{ alignSelf: 'center', width: '100%', marginTop: '20px' }}>
-                                            <h4 style={{ fontFamily: 'var(--font-sans)', fontSize: '14px', letterSpacing: '2px', color: BRAND_COPPER, textTransform: 'uppercase', textAlign: 'center', marginBottom: '16px' }}>Suggested Directions</h4>
-                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                                        <div className="mt-8 space-y-6 animate-in slide-in-from-bottom-8 duration-1000">
+                                            <p className="text-center text-[10px] uppercase tracking-[4px] text-[#a17a58]">Selected Look Directions</p>
+                                            <div className="grid md:grid-cols-2 gap-4">
                                                 {looks.map((look, i) => (
-                                                    <div key={i} style={{ padding: '16px', border: `1px solid ${BRAND_COPPER}`, background: '#fcfaf5', borderRadius: '6px', cursor: 'pointer', transition: 'all 0.2s' }}
-                                                        onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
-                                                        <h5 style={{ fontFamily: 'var(--font-sans)', fontSize: '14px', color: BRAND_INK, margin: '0 0 8px 0', lineHeight: 1.4 }}>Look {i + 1}: {look.name}</h5>
-                                                        <p style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', color: '#666', marginBottom: '12px', lineHeight: 1.5 }}>{look.direction}</p>
-                                                        <div style={{ borderTop: '1px solid #eaddd3', paddingTop: '10px' }}>
-                                                            <p style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: BRAND_COPPER, marginBottom: '6px' }}><strong>Fabric:</strong> {look.fabric_notes}</p>
-                                                            <p style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: BRAND_COPPER, margin: 0 }}><strong>Add-ons:</strong> {look.addons.join(' + ')}</p>
+                                                    <div key={i} className="bg-white border border-gray-100 p-6 rounded-sm shadow-sm hover:shadow-md transition-all group">
+                                                        <h3 className="font-serif italic text-lg mb-2">{look.name}</h3>
+                                                        <p className="text-xs text-gray-500 mb-4 font-light leading-relaxed truncate-2-lines">{look.direction}</p>
+                                                        <div className="text-[10px] uppercase tracking-widest text-[#a17a58] border-t border-gray-50 pt-4 mb-4">
+                                                            <div className="flex justify-between mb-1"><span>Fabric</span><span className="text-gray-400 font-light lowercase truncate max-w-[120px]">{look.fabric_notes}</span></div>
+                                                            <div className="flex justify-between"><span>Accents</span><span className="text-gray-400 font-light lowercase truncate max-w-[120px]">{look.addons.join(', ')}</span></div>
                                                         </div>
-                                                        <button type="button" onClick={() => { setSelectedLook(look); setStep(4); }} style={{ width: '100%', padding: '10px', background: BRAND_INK, color: 'white', fontFamily: 'var(--font-sans)', fontSize: '10px', letterSpacing: '1px', textTransform: 'uppercase', border: 'none', marginTop: '16px', cursor: 'pointer' }}>Select & Customize →</button>
+                                                        <button onClick={() => generateConcept(look)} className="w-full bg-[#1a1410] text-white py-3 text-[10px] uppercase tracking-[2px] group-hover:bg-[#a17a58] transition-all">
+                                                            Select & Visualize
+                                                        </button>
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
                                     )}
-
                                     <div ref={chatEndRef} />
                                 </div>
 
-                                <div style={{ display: 'flex', gap: '8px' }}>
-                                    <input style={{ ...InputStyle, marginBottom: 0 }} value={msg} onChange={e => setMsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleFetchLooks()} placeholder="Type your vision here..." disabled={loading} />
-                                    <button type="button" onClick={handleFetchLooks} disabled={loading} style={{ padding: '0 24px', background: BRAND_COPPER, color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: '14px', letterSpacing: '1px', textTransform: 'uppercase' }}>Send</button>
-                                </div>
-
-                                <div style={{ textAlign: 'center', marginTop: '20px' }}>
-                                    <button type="button" onClick={() => setStep(2)} style={{ background: 'none', border: 'none', color: '#999', fontFamily: 'var(--font-sans)', fontSize: '11px', textTransform: 'uppercase', cursor: 'pointer', letterSpacing: '1px' }}>← Adjust Inputs</button>
+                                <div className="flex gap-2">
+                                    <input
+                                        className="flex-1 border-gray-100 border bg-[#fafafa] rounded-sm px-6 py-4 text-sm font-light outline-none focus:border-[#a17a58] transition-all shadow-inner"
+                                        placeholder="Discuss textures, themes, or colors..."
+                                        value={msg}
+                                        onChange={e => setMsg(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && handleChat()}
+                                        disabled={loading}
+                                    />
+                                    <button onClick={handleChat} disabled={loading} className="bg-[#a17a58] text-white px-8 py-4 text-xs uppercase tracking-[2px] hover:bg-[#1a1410] transition-all shadow-md">
+                                        Send
+                                    </button>
                                 </div>
                             </div>
                         )}
 
-                        {/* STEP 4 */}
-                        {step === 4 && selectedLook && (
-                            <div className="animate-fadeUp">
-                                <h3 style={{ fontFamily: 'var(--font-sans)', fontSize: '22px', fontWeight: 400, marginBottom: '8px', color: BRAND_INK }}>{selectedLook.name}</h3>
-                                <p style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: '#666', marginBottom: '30px' }}>Customize your bespoke details below to build the final brief.</p>
+                        {/* Step 4: Concept Image */}
+                        {step === 4 && (
+                            <div className="animate-in zoom-in-95 duration-1000 text-center">
+                                <h2 className="text-2xl font-serif italic mb-2">{selectedLook?.name}</h2>
+                                <p className="text-[10px] uppercase tracking-[4px] text-[#a17a58] mb-12">Generating Your Bespoke Concept...</p>
 
-                                <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '30px' }}>
-                                    {/* Image Generation Container */}
-                                    <div>
-                                        <div style={{ width: '100%', aspectRatio: '3/4', background: '#f5f5f5', border: '1px solid #ddd', position: 'relative', overflow: 'hidden' }}>
-                                            <img
-                                                src={selectedLook.image_url}
-                                                style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: imgLoaded ? 1 : 0, transition: 'opacity 0.5s' }}
-                                                onLoad={() => setImgLoaded(true)}
-                                                onError={(e) => {
-                                                    // Fallback to a sophisticated placeholder if the AI hallucinates a URL
-                                                    e.currentTarget.src = 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?q=80&w=800&auto=format&fit=crop';
-                                                }}
-                                            />
-                                            {!imgLoaded && (
-                                                <div className="animate-pulse" style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#fafafa' }}>
-                                                    <span style={{ fontSize: '24px', opacity: 0.5, marginBottom: '10px' }}>✦</span>
-                                                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', letterSpacing: '2px', color: BRAND_COPPER }}>PULLING FROM CATALOG...</span>
-                                                </div>
-                                            )}
-
-                                            {/* Transparent overlay denoting it's a render */}
-                                            <div style={{ position: 'absolute', bottom: '10px', left: '10px', padding: '6px 12px', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(4px)', fontFamily: 'var(--font-sans)', fontSize: '9px', fontWeight: 600, letterSpacing: '1px', color: BRAND_INK, textTransform: 'uppercase', border: '1px solid rgba(0,0,0,0.1)' }}>
-                                                Base Inspiration / Real Product
+                                <div className="max-w-md mx-auto aspect-[3/4] bg-[#fafafa] border border-gray-100 rounded-sm relative overflow-hidden shadow-2xl mb-12 group">
+                                    {imgLoading ? (
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center space-y-6">
+                                            <div className="w-12 h-12 border-t-2 border-[#a17a58] rounded-full animate-spin" />
+                                            <div>
+                                                <p className="text-[10px] uppercase tracking-[3px] text-[#a17a58] animate-pulse">Weaving details...</p>
+                                                <p className="text-[8px] text-gray-400 mt-2 italic font-light italic">"{imagePrompt?.slice(0, 40)}..."</p>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    {/* Customization Options */}
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                        <div>
-                                            <label style={LabelStyle}>Lapel Style</label>
-                                            <select style={InputStyle} value={lapel} onChange={e => setLapel(e.target.value)}>
-                                                {['Peak Satin Lapel', 'Notch Wool Lapel', 'Shawl Velvet Lapel', 'Mandarin/Bandhgala Collar'].map(o => <option key={o}>{o}</option>)}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label style={LabelStyle}>Button Stance</label>
-                                            <select style={InputStyle} value={buttons} onChange={e => setButtons(e.target.value)}>
-                                                {['Fabric Covered Buttons', 'Gold / Brass Embellished', 'Minimal Hidden Placket', 'Double Breasted'].map(o => <option key={o}>{o}</option>)}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label style={LabelStyle}>Embroidery Intensity</label>
-                                            <select style={InputStyle} value={embroidery} onChange={e => setEmbroidery(e.target.value)}>
-                                                {['None (Clean & Classic)', 'Subtle Threadwork on Collar/Cuffs', 'Medium Zardozi Motifs', 'Heavy All-over Embellishment'].map(o => <option key={o}>{o}</option>)}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label style={LabelStyle}>Lining Choice</label>
-                                            <select style={InputStyle} value={lining} onChange={e => setLining(e.target.value)}>
-                                                {['Solid Contrast Silk', 'Printed Floral Silk', 'Matches Outer Fabric', 'Breathable Cotton Blend'].map(o => <option key={o}>{o}</option>)}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label style={LabelStyle}>Monogram / Initials (Optional)</label>
-                                            <input style={{ ...InputStyle, marginBottom: 0 }} value={monogram} onChange={e => setMonogram(e.target.value)} placeholder="e.g. A.R (Inside Collar)" />
-                                        </div>
-                                    </div>
+                                    ) : (
+                                        <img src={conceptImg || ''} className="w-full h-full object-cover transition-all duration-1000 animate-in fade-in zoom-in-110" />
+                                    )}
+                                    <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur px-3 py-1 text-[8px] uppercase tracking-widest text-[#a17a58] border border-gray-100 shadow-sm">AI Render · Concept Only</div>
                                 </div>
 
-                                <div style={{ display: 'flex', gap: '10px', marginTop: '40px' }}>
-                                    <button type="button" onClick={() => setStep(3)} style={{ flex: 1, padding: '16px', background: 'transparent', color: BRAND_COPPER, border: `1px solid ${BRAND_COPPER}`, fontFamily: 'var(--font-sans)', letterSpacing: '2px', textTransform: 'uppercase', cursor: 'pointer' }}>← Change Look</button>
-                                    <button type="button" onClick={() => setStep(5)} style={{ flex: 2, padding: '16px', background: BRAND_INK, color: 'white', fontFamily: 'var(--font-sans)', letterSpacing: '2px', textTransform: 'uppercase', border: 'none', cursor: 'pointer' }}>Next: Human Handover →</button>
+                                <div className="flex justify-center gap-4">
+                                    <button onClick={() => setStep(3)} className="text-[10px] uppercase tracking-[2px] text-gray-400 hover:text-[#a17a58] transition-all">← Different Direction</button>
+                                    {!imgLoading && (
+                                        <button onClick={() => setStep(5)} className="bg-[#1a1410] text-white px-12 py-4 text-xs uppercase tracking-[3px] hover:bg-[#a17a58] transition-all shadow-lg">
+                                            Finalize & Bespoke Details →
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         )}
 
-                        {/* STEP 5 */}
+                        {/* Step 5: Finalize */}
                         {step === 5 && (
-                            <div className="animate-fadeUp" style={{ textAlign: 'center', padding: '20px 0' }}>
-                                <span style={{ fontSize: '40px', display: 'block', marginBottom: '20px' }}>✦</span>
-                                <h3 style={{ fontFamily: 'var(--font-sans)', fontSize: '28px', fontWeight: 300, marginBottom: '16px', color: BRAND_INK }}>Your Brief is Ready</h3>
-                                <p style={{ fontFamily: 'var(--font-sans)', fontSize: '15px', color: '#666', marginBottom: '40px', lineHeight: 1.6, maxWidth: '500px', margin: '0 auto 40px auto' }}>
-                                    We've assembled your design brief, concept image, and bespoke measurements. It's time to speak with a master tailor to confirm fabrics, finalize pricing, and begin production.
-                                </p>
+                            <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+                                <h2 className="text-2xl font-serif italic mb-10 text-center">Bespoke Finishings</h2>
 
-                                <div style={{ background: '#fafafa', border: '1px solid #eee', padding: '24px', textAlign: 'left', fontFamily: 'Courier New', fontSize: '12px', color: '#555', lineHeight: 1.6, marginBottom: '40px', whiteSpace: 'pre-wrap', maxHeight: '200px', overflowY: 'auto' }}>
-                                    {finalizeBriefString()}
+                                <div className="grid md:grid-cols-2 gap-16 mb-16">
+                                    <div className="space-y-6">
+                                        <div>
+                                            <label className={labelClasses}>Lapel / Collar Style</label>
+                                            <select className={inputClasses} value={lapel} onChange={e => setLapel(e.target.value)}>
+                                                {['Peak Satin Lapel', 'Notch Wool Lapel', 'Shawl Velvet Lapel', 'Mandarin/Bandhgala Collar', 'Modern Nehru Collar'].map(o => <option key={o}>{o}</option>)}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className={labelClasses}>Button Finish</label>
+                                            <select className={inputClasses} value={buttons} onChange={e => setButtons(e.target.value)}>
+                                                {['Fabric Covered', 'Gold Plated Brass', 'Silver Filigree', 'Antique Copper', 'Hidden Placket'].map(o => <option key={o}>{o}</option>)}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className={labelClasses}>Embroidery Intensity</label>
+                                            <select className={inputClasses} value={embroidery} onChange={e => setEmbroidery(e.target.value)}>
+                                                {['None (Minimal)', 'Subtle (Collar/Cuffs)', 'Moderate (Chest Motif)', 'Heavy (Full Front)'].map(o => <option key={o}>{o}</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-6">
+                                        <div>
+                                            <label className={labelClasses}>Lining Choice</label>
+                                            <select className={inputClasses} value={lining} onChange={e => setLining(e.target.value)}>
+                                                {['Printed Silk', 'Solid Satin', 'Matches Outer', 'Lightweight Cotton'].map(o => <option key={o}>{o}</option>)}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className={labelClasses}>Monogram Initials (Optional)</label>
+                                            <input className={inputClasses} placeholder="e.g. A.S." value={monogram} onChange={e => setMonogram(e.target.value)} maxLength={5} />
+                                        </div>
+                                        <div className="p-6 bg-[#fafafa] border border-gray-100 rounded-sm">
+                                            <p className="text-[10px] uppercase tracking-widest text-[#a17a58] mb-4">Brief Ready</p>
+                                            <p className="text-[11px] font-mono text-gray-500 line-clamp-3 italic">"{finalizeBrief().slice(0, 100)}..."</p>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
-                                    <button type="button" onClick={() => window.open(`https://wa.me/919063356542?text=${encodeURIComponent(finalizeBriefString())}`, '_blank')}
-                                        style={{ width: '100%', maxWidth: '400px', padding: '18px', background: '#25D366', color: 'white', fontFamily: 'var(--font-sans)', fontSize: '14px', letterSpacing: '2px', textTransform: 'uppercase', border: 'none', cursor: 'pointer', borderRadius: '4px', fontWeight: 600, boxShadow: '0 8px 16px rgba(37,211,102,0.2)' }}>
-                                        Start WhatsApp Handover
+                                <div className="flex flex-col items-center gap-6">
+                                    <button
+                                        onClick={() => window.open(`https://wa.me/919063356542?text=${encodeURIComponent(finalizeBrief())}`, '_blank')}
+                                        className="w-full max-w-md bg-[#25D366] text-white py-5 text-sm uppercase tracking-[4px] hover:scale-[1.02] transition-all shadow-xl font-bold rounded-sm flex items-center justify-center gap-3 group"
+                                    >
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" /></svg>
+                                        Handover to Master Tailor
                                     </button>
-                                    <button type="button" onClick={() => setStep(4)} style={{ background: 'none', border: 'none', color: '#999', fontFamily: 'var(--font-sans)', fontSize: '11px', textTransform: 'uppercase', cursor: 'pointer', letterSpacing: '1px', marginTop: '10px' }}>← Edit Customizations</button>
+                                    <button onClick={() => setStep(4)} className="text-[10px] uppercase tracking-[2px] text-gray-400 hover:text-[#a17a58] transition-all">← Back to Design</button>
                                 </div>
                             </div>
                         )}
 
                     </div>
+
+                    <div className="mt-20 text-center">
+                        <p className="text-gray-400 text-[10px] uppercase tracking-[3px] leading-relaxed max-w-sm mx-auto">
+                            Each Asuka piece is handcrafted over <span className="text-[#a17a58]">80+ hours</span> using heritage techniques and premium Italian fabrics.
+                        </p>
+                    </div>
+
                 </div>
             </main>
+
             <Footer />
-        </>
+
+            <style jsx global>{`
+                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+                .animate-spin { animation: spin 1s linear infinite; }
+                .truncate-2-lines {
+                    display: -webkit-box;
+                    -webkit-line-clamp: 2;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                }
+            `}</style>
+        </div>
     )
 }
