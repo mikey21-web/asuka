@@ -141,7 +141,7 @@ export default function ProductPage() {
                             </button>
                             <button
                                 onClick={() => setSizerOpen(true)}
-                                className={`w-full py-3 border border-[#a17a58] text-[#a17a58] text-[11px] font-mono tracking-[2px] uppercase hover:bg-[#faf7f2] transition-colors my-2`}
+                                className={`w-full py-3 border border-[var(--gold)] text-[var(--gold)] text-[11px] font-mono tracking-[2px] uppercase hover:bg-[var(--gold-dim)] transition-colors my-2`}
                             >
                                 ✦ Find My Size with AI
                             </button>
@@ -163,7 +163,7 @@ export default function ProductPage() {
                                 { title: '3. Care', content: 'Dry clean only. Store in a cool, dry place away from direct sunlight.' }
                             ].map((item, i) => (
                                 <details key={i} className="group border-b border-[#eee] py-4 cursor-pointer">
-                                    <summary className={`flex justify-between items-center text-[12px] font-mono tracking-[2px] uppercase list-none transition-colors text-[#8f654d]`}>
+                                    <summary className={`flex justify-between items-center text-[12px] font-mono tracking-[2px] uppercase list-none transition-colors text-[var(--gold)]`}>
                                         {item.title}
                                         <span className="text-xl font-light scale-y-75 group-open:rotate-45 transition-transform">+</span>
                                     </summary>

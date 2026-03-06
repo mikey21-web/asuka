@@ -26,6 +26,8 @@ export default function ProductSizerModal({ isOpen, onClose }: { isOpen: boolean
   /* State for photos */
   const [photos, setPhotos] = useState<(File | null)[]>([null, null])
 
+  if (!isOpen) return null
+
   async function runSizer() {
     setLoading(true)
     try {
