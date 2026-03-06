@@ -281,12 +281,6 @@ export default function ProductSizerModal({ isOpen, onClose }: { isOpen: boolean
                 )}
               </div>
 
-              <div className="w-full max-w-sm bg-[var(--paper2)] border border-[var(--gold-border)] p-6 rounded-lg mb-8 text-center">
-                <p className="text-sm text-[#555] leading-relaxed font-sans italic">
-                  "{result.reasoning?.split('.')[0]}."
-                </p>
-              </div>
-
               <div className="w-full flex flex-col gap-3">
                 <button onClick={onClose} className="w-full py-4 bg-[var(--ink)] border-none text-white font-mono text-[11px] tracking-[3px] uppercase hover:bg-[var(--gold)] transition-colors cursor-pointer">
                   Shop this Size →

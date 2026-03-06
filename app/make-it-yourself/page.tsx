@@ -55,10 +55,15 @@ export default function MakeItYourself() {
     const [lining, setLining] = useState('Printed Silk')
     const [monogram, setMonogram] = useState('')
 
-    const chatEndRef = useRef<HTMLDivElement>(null)
+    const chatContainerRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
-        if (step === 3) chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+        if (step === 3 && chatContainerRef.current) {
+            chatContainerRef.current.scrollTo({
+                top: chatContainerRef.current.scrollHeight,
+                behavior: 'smooth'
+            })
+        }
     }, [chatLog, loading, step])
 
     const handleChat = async () => {
@@ -290,7 +295,7 @@ Please connect me with a tailor to finalize.`
                                     <p className="text-[10px] uppercase tracking-widest text-[#a17a58]">Designing for your {occasion}...</p>
                                 </div>
 
-                                <div className="flex-1 min-h-[400px] border border-gray-100 bg-[#fafafa]/50 rounded-lg p-6 overflow-y-auto mb-6 flex flex-col gap-4">
+                                <div ref={chatContainerRef} className="flex-1 min-h-[400px] border border-gray-100 bg-[#fafafa]/50 rounded-lg p-6 overflow-y-auto mb-6 flex flex-col gap-4">
                                     <div className="bg-white p-4 rounded-lg border border-gray-100 max-w-[85%] self-start shadow-sm transition-all duration-500">
                                         <p className="text-sm font-light leading-relaxed text-gray-700">
                                             Namaste! I have your preferences. A {occasion} in Jaipur calls for something truly special. What specific mood or celebrity inspiration do you have in mind?
@@ -332,7 +337,6 @@ Please connect me with a tailor to finalize.`
                                             </div>
                                         </div>
                                     )}
-                                    <div ref={chatEndRef} />
                                 </div>
 
                                 <div className="flex gap-2">

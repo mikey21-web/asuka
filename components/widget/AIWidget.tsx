@@ -166,7 +166,16 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
     }
   }, [persona, msgs.length])
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs, loading, streamingText])
+  const chatContainerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      })
+    }
+  }, [msgs, loading, streamingText])
 
   // Typewriter effect helper
   const typeWriter = useCallback((text: string, products?: any[]) => {
@@ -244,7 +253,7 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
         ))}
       </div>
       {/* Messages */}
-      <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto', padding: '15px', WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain' }}>
+      <div ref={chatContainerRef} className="chat-scroll" style={{ flex: 1, overflowY: 'auto', padding: '15px', WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain' }}>
         {msgs.map((m, i) => {
           const cleanContent = m.content.replace(/[✨👋✦]/g, '').trim()
           return (
@@ -285,7 +294,6 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
             </div>
           </div>
         )}
-        <div ref={bottomRef} />
       </div>
       {/* Input area - anchored to absolute bottom */}
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', background: '#fff', padding: '12px 15px', borderTop: '1px solid #e8e0d6', flexShrink: 0, width: '100%', marginBottom: '-1px', borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}>
