@@ -68,20 +68,20 @@ export default function ProductSizerModal({ isOpen, onClose }: { isOpen: boolean
     setLoading(false)
   }
 
-  const InputStyle = { width: '100%', background: '#fff', border: '1px solid #d4c4b0', color: '#1a1410', fontFamily: 'var(--font-sans)', fontSize: '14px', padding: '12px', outline: 'none', marginBottom: '16px', borderRadius: '4px', WebkitAppearance: 'none' as const, MozAppearance: 'none' as const }
-  const LabelStyle = { display: 'block', fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '2px', color: '#a17a58', textTransform: 'uppercase' as const, marginBottom: '6px' }
+  const InputStyle = { width: '100%', background: '#fff', border: '1px solid var(--gold-border)', color: 'var(--ink)', fontFamily: 'var(--font-sans)', fontSize: '14px', padding: '12px', outline: 'none', marginBottom: '16px', borderRadius: '4px', WebkitAppearance: 'none' as const, MozAppearance: 'none' as const }
+  const LabelStyle = { display: 'block', fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '2px', color: 'var(--gold)', textTransform: 'uppercase' as const, marginBottom: '6px' }
 
   return (
     <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto">
       <div className="bg-[#fffdfd] w-full max-w-lg rounded-xl shadow-2xl relative flex flex-col max-h-[90vh]">
 
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-[#e8e0d6] shrink-0">
+        <div className="flex items-center justify-between p-6 border-b border-[var(--gold-border)] shrink-0">
           <div>
-            <h2 className="text-2xl font-serif text-[#1a1410]">AI Fit Finder</h2>
-            <p className="text-xs font-mono text-[#a17a58] tracking-widest uppercase mt-1">Discover your perfect Asuka size</p>
+            <h2 className="text-2xl font-serif text-[var(--ink)]">AI Fit Finder</h2>
+            <p className="text-xs font-mono text-[var(--gold)] tracking-widest uppercase mt-1">Discover your perfect Asuka size</p>
           </div>
-          <button onClick={onClose} className="text-[#1a1410] hover:text-[#a17a58] transition-colors p-2">
+          <button onClick={onClose} className="text-[var(--ink)] hover:text-[var(--gold)] transition-colors p-2">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
           </button>
         </div>
@@ -138,7 +138,7 @@ export default function ProductSizerModal({ isOpen, onClose }: { isOpen: boolean
                 <button
                   onClick={() => setStep(2)}
                   disabled={!size}
-                  className="w-full py-4 bg-[#1a1410] text-white font-mono text-[11px] tracking-[3px] uppercase disabled:opacity-50 hover:bg-[#a17a58] transition-colors"
+                  className="w-full py-4 bg-[var(--ink)] text-white font-mono text-[11px] tracking-[3px] uppercase disabled:opacity-50 hover:bg-[var(--gold)] transition-colors"
                 >
                   Next: Fit & Shape →
                 </button>
@@ -155,7 +155,7 @@ export default function ProductSizerModal({ isOpen, onClose }: { isOpen: boolean
                 {FIT_PREFS.map(f => (
                   <button
                     key={f} onClick={() => setFit(f)}
-                    className={`flex-1 min-w-[100px] py-3 text-[10px] font-mono uppercase border rounded-sm transition-colors cursor-pointer ${fit === f ? 'bg-[#a17a58] border-[#a17a58] text-white font-bold' : 'bg-white border-[#d4c4b0] text-[#1a1410] hover:border-[#a17a58]'}`}
+                    className={`flex-1 min-w-[100px] py-3 text-[10px] font-mono uppercase border rounded-sm transition-colors cursor-pointer ${fit === f ? 'bg-[var(--gold)] border-[var(--gold)] text-white font-bold' : 'bg-white border-[var(--gold-border)] text-[var(--ink)] hover:border-[var(--gold)]'}`}
                   >
                     {f}
                   </button>
@@ -204,11 +204,11 @@ export default function ProductSizerModal({ isOpen, onClose }: { isOpen: boolean
                         input.click();
                       }}
                       style={{
-                        border: '1px dashed #d4c4b0',
+                        border: '1px dashed var(--gold-border)',
                         padding: '16px 8px',
                         textAlign: 'center',
                         cursor: 'pointer',
-                        background: photos[i] ? '#fdf3ec' : '#faf7f2',
+                        background: photos[i] ? 'var(--gold-dim)' : 'var(--paper)',
                         borderRadius: '4px',
                         position: 'relative',
                         overflow: 'hidden',
@@ -257,7 +257,7 @@ export default function ProductSizerModal({ isOpen, onClose }: { isOpen: boolean
                 <button
                   onClick={runSizer}
                   disabled={loading}
-                  className="flex-[2] py-4 bg-[#1a1410] text-white font-mono text-[11px] tracking-[3px] uppercase disabled:opacity-70 flex items-center justify-center cursor-pointer border-none"
+                  className="flex-[2] py-4 bg-[var(--ink)] text-white font-mono text-[11px] tracking-[3px] uppercase disabled:opacity-70 flex items-center justify-center cursor-pointer border-none"
                 >
                   {loading ? <span className="animate-pulse">Analyzing...</span> : 'Get Recommendation'}
                 </button>
@@ -268,25 +268,25 @@ export default function ProductSizerModal({ isOpen, onClose }: { isOpen: boolean
           {step === 3 && result && (
             <div className="animate-fadeUp flex flex-col items-center justify-center py-8">
               <div className="text-center mb-10">
-                <h4 className="font-mono text-[11px] tracking-[4px] text-[#a17a58] uppercase mb-4">Recommended Size</h4>
-                <div className="text-[140px] font-serif text-[#1a1410] leading-none mb-6">
+                <h4 className="font-mono text-[11px] tracking-[4px] text-[var(--gold)] uppercase mb-4">Recommended Size</h4>
+                <div className="text-[140px] font-serif text-[var(--ink)] leading-none mb-6">
                   {result.asuka_size || result.size}
                 </div>
                 {result.alternative && (
                   <div className="font-mono text-xs text-[#888] tracking-widest">
-                    PROBABLE SECOND: <span className="text-[#1a1410] font-bold">{result.alternative}</span>
+                    PROBABLE SECOND: <span className="text-[var(--ink)] font-bold">{result.alternative}</span>
                   </div>
                 )}
               </div>
 
-              <div className="w-full max-w-sm bg-[#faf7f2] border border-[#e8e0d6] p-6 rounded-lg mb-8 text-center">
+              <div className="w-full max-w-sm bg-[var(--paper2)] border border-[var(--gold-border)] p-6 rounded-lg mb-8 text-center">
                 <p className="text-sm text-[#555] leading-relaxed font-sans italic">
                   "{result.reasoning?.split('.')[0]}."
                 </p>
               </div>
 
               <div className="w-full flex flex-col gap-3">
-                <button onClick={onClose} className="w-full py-4 bg-[#1a1410] border-none text-white font-mono text-[11px] tracking-[3px] uppercase hover:bg-[#a17a58] transition-colors cursor-pointer">
+                <button onClick={onClose} className="w-full py-4 bg-[var(--ink)] border-none text-white font-mono text-[11px] tracking-[3px] uppercase hover:bg-[var(--gold)] transition-colors cursor-pointer">
                   Shop this Size →
                 </button>
                 <div className="grid grid-cols-2 gap-3">

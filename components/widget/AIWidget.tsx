@@ -101,21 +101,23 @@ function ProductCard({ p: productObj, name }: { p?: any; name?: string }) {
   const title = p.title || p.name
   const price = p.price
   const imgUrl = p.image_url || p.img || ''
-  const prodUrl = p.handle ? `/products/${p.handle}` : p.url
+  const prodUrl = p.handle
+    ? `https://asukacouture.com/products/${p.handle}`
+    : (p.url && p.url.startsWith('http') ? p.url : `https://asukacouture.com${p.url || ''}`)
 
   return (
-    <div className="animate-fadeUp" style={{ marginTop: '10px', background: '#faf7f2', border: '1px solid #d4c4b0', overflow: 'hidden', display: 'flex', borderRadius: '6px' }}>
+    <div className="animate-fadeUp" style={{ marginTop: '10px', background: 'var(--paper)', border: '1px solid var(--gold-border)', overflow: 'hidden', display: 'flex', borderRadius: '6px' }}>
       {imgUrl && (
-        <div style={{ width: '80px', height: '100px', flexShrink: 0, borderRight: '1px solid #e8e0d6' }}>
+        <div style={{ width: '80px', height: '100px', flexShrink: 0, borderRight: '1px solid var(--gold-border)' }}>
           <img src={imgUrl} alt={title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
       )}
       <div style={{ padding: '12px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <div style={{ fontFamily: 'var(--font-serif)', fontSize: '13px', color: '#1a1410', marginBottom: '4px' }}>{title}</div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: '#a17a58', letterSpacing: '1px', marginBottom: '8px' }}>
+        <div style={{ fontFamily: 'var(--font-serif)', fontSize: '13px', color: 'var(--ink)', marginBottom: '4px' }}>{title}</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--gold)', letterSpacing: '1px', marginBottom: '8px' }}>
           {typeof price === 'string' && price.startsWith('Rs') ? price : `₹${Number(price).toLocaleString('en-IN')}`}
         </div>
-        <a href={prodUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '1.5px', color: '#fff', background: '#a17a58', padding: '5px 10px', textDecoration: 'none', textAlign: 'center', width: 'fit-content', borderRadius: '3px' }}>
+        <a href={prodUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '1.5px', color: '#fff', background: 'var(--gold)', padding: '5px 10px', textDecoration: 'none', textAlign: 'center', width: 'fit-content', borderRadius: '3px' }}>
           VIEW PRODUCT →
         </a>
       </div>
