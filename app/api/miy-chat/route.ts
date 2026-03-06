@@ -27,18 +27,16 @@ export async function POST(req: Request) {
     
     YOUR GOAL:
     - Listen to their vision (occasion, mood, budget).
-    - Propose 2-3 distinct "Look Directions". Each look must have:
-        1. A name (e.g. 'The Ivory Rajah', 'Midnight Minimalist').
-        2. A concise styling direction.
-        3. Specific fabric recommendations (mentioning weights/finishes).
-        4. Matching add-ons.
-    - catalog_reference: Use the provided catalog for inspiration but feel free to suggest custom tweaks.
+    - Propose 2-3 distinct "Look Directions". Each look must follow this strict schema:
+        { "name": string, "direction": string, "fabric_notes": string, "addons": string[] }
+    - catalog_reference: Use the provided simplified catalog for inspiration.
     
     RESPONSE JSON LOGIC:
+    - Return ONLY a valid JSON object. No preamble.
     - 'message': Warm, expert feedback on their vision.
-    - 'looks': Array of 2-3 look objects. REQUIRED once preferences are clear.
-    - 'image_prompt': A highly detailed stable-diffusion style prompt for Step 4. 
-       Format: "luxury [garment type] in [color], [fabric texture], [embroidery details], editorial fashion shoot, studio lighting, 8k".
+    - 'looks': Array of the look objects defined above (ONLY provide once preferences are clear).
+    - 'image_prompt': A highly detailed IMAGE GENERATION prompt for Step 4. 
+       Format: "Professional fashion photography of a [garment type] in [color], [fabric texture], [embroidery details], luxury studio lighting, editorial style, 8k".
     
     CATALOG REFERENCES:
     ${JSON.stringify(simplifiedCatalog)}

@@ -104,6 +104,12 @@ export default function MakeItYourself() {
             setConceptImg(url)
             setImgLoading(false)
         }
+        img.onerror = () => {
+            console.error("Failed to load concept image")
+            setImgLoading(false)
+            // Fallback to a placeholder or stay on chat
+            alert("The visualization atelier is currently backlogged. We've captured your design details!")
+        }
     }
 
     const finalizeBrief = () => {
@@ -316,7 +322,7 @@ Please connect me with a tailor to finalize.`
                                                         <p className="text-xs text-gray-500 mb-4 font-light leading-relaxed truncate-2-lines">{look.direction}</p>
                                                         <div className="text-[10px] uppercase tracking-widest text-[#a17a58] border-t border-gray-50 pt-4 mb-4">
                                                             <div className="flex justify-between mb-1"><span>Fabric</span><span className="text-gray-400 font-light lowercase truncate max-w-[120px]">{look.fabric_notes}</span></div>
-                                                            <div className="flex justify-between"><span>Accents</span><span className="text-gray-400 font-light lowercase truncate max-w-[120px]">{look.addons.join(', ')}</span></div>
+                                                            <div className="flex justify-between"><span>Accents</span><span className="text-gray-400 font-light lowercase truncate max-w-[120px]">{look.addons?.join(', ') || 'None'}</span></div>
                                                         </div>
                                                         <button onClick={() => generateConcept(look)} className="w-full bg-[#1a1410] text-white py-3 text-[10px] uppercase tracking-[2px] group-hover:bg-[#a17a58] transition-all">
                                                             Select & Visualize
@@ -357,7 +363,7 @@ Please connect me with a tailor to finalize.`
                                             <div className="w-12 h-12 border-t-2 border-[#a17a58] rounded-full animate-spin" />
                                             <div>
                                                 <p className="text-[10px] uppercase tracking-[3px] text-[#a17a58] animate-pulse">Weaving details...</p>
-                                                <p className="text-[8px] text-gray-400 mt-2 italic font-light italic">"{imagePrompt?.slice(0, 40)}..."</p>
+                                                <p className="text-[8px] text-gray-400 mt-2 font-light italic">"{imagePrompt?.slice(0, 40)}..."</p>
                                             </div>
                                         </div>
                                     ) : (

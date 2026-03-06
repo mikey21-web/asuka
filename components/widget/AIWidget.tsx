@@ -345,6 +345,9 @@ export default function AIWidget({ isFloating = false }: { isFloating?: boolean 
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
 
+  /* State for the Stylist Chat */
+  const [chatKey, setChatKey] = useState(0)
+
   useEffect(() => {
     setOpen(false)
   }, [pathname])
@@ -361,9 +364,6 @@ export default function AIWidget({ isFloating = false }: { isFloating?: boolean 
   if (pathname === '/make-it-yourself') {
     return null;
   }
-
-  /* State for the Stylist Chat */
-  const [chatKey, setChatKey] = useState(0)
 
   const handleStartOver = () => {
     localStorage.removeItem('asuka_chat_style')
