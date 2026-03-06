@@ -10,21 +10,21 @@
    Dark ink: #1a1410
    ══════════════════════════════════════════ */
 :root {
-  /* Primary brand accent — exact live site brown */
-  --gold: #a17a58;
-  --gold-light: #A67C5B;
-  --gold-dim: rgba(161, 122, 88, 0.08);
-  --gold-border: rgba(161, 122, 88, 0.22);
+  /* Primary brand accent — Matched to store signage and buttons */
+  --gold: #916c4c;
+  --gold-light: #a47e5e;
+  --gold-dim: rgba(145, 108, 76, 0.08);
+  --gold-border: rgba(145, 108, 76, 0.22);
 
   /* Ink / text */
   --ink: #1a1410;
-  --ink2: #221c17;
-  --ink3: #2e251e;
+  --ink2: #2a221b;
+  --ink3: #3d3128;
 
-  /* Backgrounds */
-  --paper: #FAF6F1;
-  --paper2: #F5EDE3;
-  --cream: #FAF6F1;
+  /* Backgrounds — Matched to the clean site background */
+  --paper: #FAF9F6;
+  --paper2: #F5F2ED;
+  --cream: #FAF9F6;
 
   /* Muted tones */
   --stone: #7A6A5A;

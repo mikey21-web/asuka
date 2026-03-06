@@ -47,6 +47,16 @@ function localSizer(mode: string, brand?: string, size?: string, chest?: number)
 }
 
 export async function POST(req: NextRequest) {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  }
+
+  if (req.method === 'OPTIONS') {
+    return new NextResponse(null, { headers })
+  }
+
   try {
     const body = await req.json()
     const { mode, brand, size, chest, waist, product_type, session_id } = body
@@ -82,7 +92,12 @@ export async function POST(req: NextRequest) {
     if (!result) {
       try {
         const { groqChat } = await import('@/lib/groq')
-        const { fit_preference, body_shape, issues, height, weight } = body
+        const { fit_preference, body_shape, issues, height, weight, photos } = body
+        const hasPhotos = Array.isArray(photos) && photos.length > 0
+
+        const systemMsg = hasPhotos
+          ? 'You are the Elite Asuka Couture master tailor AI with vision capabilities. Analyze the user details and the provide body photos to determine the perfect garment size. Be extremely precise.'
+          : 'You are the Elite Asuka Couture master tailor AI. Provide expert sizing advice in pure JSON.';
 
         const prompt = `User's typical brand and size: ${brand} ${size}. 
              Personal details: Height: ${height || 'N/A'}, Weight: ${weight || 'N/A'}.
@@ -95,7 +110,7 @@ export async function POST(req: NextRequest) {
              
              Reasoning Strategy:
              - Mention why you picked the size (e.g. 'Since Zara runs small' or 'Given your athletic build').
-             - If they have a fit issue like 'Shoulder drops', suggest a size that solves it.
+             - ${hasPhotos ? 'Mention specific observations from the photos (e.g., "Based on your front/side profile...").' : ''}
              - Keep the tone premium and reassuring.
              
              Return ONLY valid JSON:
@@ -103,13 +118,43 @@ export async function POST(req: NextRequest) {
                "size": "Number string (e.g. '40')", 
                "alternative": "Alternative size or 'MTO' for custom", 
                "confidence": "High/Medium/Low", 
-               "reasoning": "Detailed, conversational reasoning in 2-3 sentences."
+               "reasoning": "Detailed, conversational reasoning in 1-2 sentences."
              }`
 
-        const aiResponse = await groqChat([
-          { role: 'system', content: 'You are the Elite Asuka Couture master tailor AI. Provide expert sizing advice in pure JSON.' },
-          { role: 'user', content: prompt }
-        ], 500, 0.3)
+        let aiResponse: string;
+
+        if (hasPhotos) {
+          // Use Llama Vision for photo analysis
+          const { Groq } = await import('groq-sdk')
+          const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+
+          const messages = [
+            { role: 'system', content: systemMsg },
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: prompt },
+                ...photos.map((p: string) => ({
+                  type: 'image_url',
+                  image_url: { url: p }
+                }))
+              ]
+            }
+          ]
+
+          const completion = await groq.chat.completions.create({
+            messages: messages as any,
+            model: 'llama-3.2-11b-vision-preview',
+            temperature: 0.2,
+            response_format: { type: "json_object" }
+          })
+          aiResponse = completion.choices[0]?.message?.content || '{}'
+        } else {
+          aiResponse = await groqChat([
+            { role: 'system', content: systemMsg },
+            { role: 'user', content: prompt }
+          ], 600, 0.3)
+        }
 
         let aiResult = { size: "40", alternative: "42", confidence: "Medium", reasoning: "Based on your inputs, we recommend taking a standard size and speaking to a tailor." }
         try {
@@ -141,7 +186,7 @@ export async function POST(req: NextRequest) {
       reasoning: result.reasoning,
       fallback: result.fallback,
       status: 'ok',
-    })
+    }, { headers })
 
   } catch (err: any) {
     console.error('Sizer API error:', err)

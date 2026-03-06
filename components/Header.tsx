@@ -143,13 +143,13 @@ export default function Header() {
   return (
     <>
       <div className="announcement-bar bg-black text-white text-[9px] uppercase font-mono tracking-[2px] hidden sm:flex w-full border-b border-white/10 z-[1002]">
-        <Link href="/ethnic-home" className={`flex-1 py-1.5 text-center transition-colors ${!isWestern ? 'bg-[#8f654d] text-white' : 'text-white/60 hover:text-white'}`}>Ethnic Wear</Link>
+        <Link href="/ethnic-home" className={`flex-1 py-1.5 text-center transition-colors ${!isWestern ? 'bg-[#a17a58] text-white' : 'text-white/60 hover:text-white'}`}>Ethnic Wear</Link>
         <Link href="/western-home" className={`flex-1 py-1.5 text-center transition-colors ${isWestern ? 'bg-[#008b8b] text-white' : 'text-white/60 hover:text-white'}`}>Western Wear</Link>
       </div>
 
       {/* Main Header Container */}
       <header
-        className={`sticky top-0 z-[1001] transition-all duration-300 ${isWestern ? 'bg-[#008b8b] text-white shadow-lg' : isEthnic ? 'bg-[#8f654d] text-white shadow-lg' : 'bg-white text-[#1a1410] border-b border-[#eee]'} ${isScrolled ? 'py-0.5' : 'py-1.5'}`}
+        className={`sticky top-0 z-[1001] transition-all duration-300 ${isWestern ? 'bg-[#008b8b] text-white shadow-lg' : isEthnic ? 'bg-[#a17a58] text-white shadow-lg' : 'bg-white text-[#1a1410] border-b border-[#eee]'} ${isScrolled ? 'py-0.5' : 'py-1.5'}`}
       >
         <div className="flex items-center justify-between px-5 h-16 max-w-[1600px] mx-auto">
           {/* MOBILE ONLY: Hamburger */}
@@ -176,9 +176,9 @@ export default function Header() {
 
             {/* Accessories dropdown */}
             <div onMouseEnter={() => setShowAcc(true)} onMouseLeave={() => setShowAcc(false)} style={{ position: 'relative' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 500, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#1a1410', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', transition: 'color 0.2s' }}
-                onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#a17a58'}
-                onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#1a1410'}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 500, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'currentColor', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', transition: 'opacity 0.2s' }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = '0.7'}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = '1'}>
                 ACCESSORIES <span style={{ fontSize: '8px' }}>▾</span>
               </span>
               <div style={{
@@ -214,7 +214,7 @@ export default function Header() {
             {/* Cart */}
             <button type="button" className="bg-transparent border-none cursor-pointer p-1 text-current relative">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
-              <span className={`absolute -top-1 -right-1 flex h-[15px] w-[15px] items-center justify-center rounded-full text-[9px] font-mono font-bold ${isWestern ? 'bg-white text-[#008b8b]' : isEthnic ? 'bg-white text-[#8f654d]' : 'bg-[#1a1410] text-white'}`}>
+              <span className={`absolute -top-1 -right-1 flex h-[15px] w-[15px] items-center justify-center rounded-full text-[9px] font-mono font-bold ${isWestern ? 'bg-white text-[#008b8b]' : isEthnic ? 'bg-white text-[#a17a58]' : 'bg-[#1a1410] text-white'}`}>
                 0
               </span>
             </button>

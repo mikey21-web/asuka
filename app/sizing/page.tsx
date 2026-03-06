@@ -396,46 +396,83 @@ export default function SizingPage() {
               </p>
 
               <div style={{ background: 'white', padding: '40px', border: '1px solid rgba(0,0,0,0.08)', marginBottom: '28px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '24px', marginBottom: '32px' }}>
                   {[
-                    { label: 'Front photo (fully clothed)', icon: '🧍' },
-                    { label: 'Side photo (fully clothed)', icon: '🧍‍♂️' },
-                    { label: 'Garment label photo', icon: '🏷' },
-                    { label: 'Tape measure photo', icon: '📏' },
+                    { label: 'Front photo', icon: '🧍' },
+                    { label: 'Side photo', icon: '🧍‍♂️' },
+                    { label: 'Garment label', icon: '🏷' },
+                    { label: 'Tape measure', icon: '📏' },
                   ].map((slot, i) => (
                     <div
                       key={slot.label}
-                      onClick={() => fileRef.current?.click()}
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/*';
+                        input.onchange = (e: any) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const newPhotos = [...photos];
+                            newPhotos[i] = file;
+                            setPhotos(newPhotos);
+                          }
+                        };
+                        input.click();
+                      }}
                       style={{
-                        border: '2px dashed rgba(0,0,0,0.15)', padding: '32px', textAlign: 'center',
-                        cursor: 'pointer', transition: 'all 0.2s', background: photos[i] ? '#fdf3ec' : 'white',
+                        border: '2px dashed rgba(0,0,0,0.15)',
+                        padding: '24px 12px',
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        background: photos[i] ? '#fdf3ec' : 'white',
+                        height: '140px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        position: 'relative',
+                        overflow: 'hidden'
                       }}
                       onMouseEnter={e => e.currentTarget.style.borderColor = BRAND}
                       onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(0,0,0,0.15)'}
                     >
-                      <div style={{ fontSize: '36px', marginBottom: '12px' }}>{slot.icon}</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '1px', color: photos[i] ? BRAND : '#999' }}>
-                        {photos[i] ? `✓ ${photos[i].name}` : slot.label}
-                      </div>
+                      {photos[i] ? (
+                        <>
+                          <img
+                            src={URL.createObjectURL(photos[i] as any)}
+                            alt="preview"
+                            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4 }}
+                          />
+                          <div style={{ position: 'relative', zIndex: 1 }}>
+                            <div style={{ fontSize: '24px', marginBottom: '8px' }}>✓</div>
+                            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '1px', color: BRAND, fontWeight: 'bold', textShadow: '0 0 10px white' }}>
+                              {(photos[i] as any).name.slice(0, 15)}...
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div style={{ fontSize: '32px', marginBottom: '10px' }}>{slot.icon}</div>
+                          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '1px', color: '#999', textTransform: 'uppercase' }}>
+                            {slot.label}
+                          </div>
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>
-                <input
-                  ref={fileRef} type="file" accept="image/*" multiple
-                  style={{ display: 'none' }}
-                  onChange={e => setPhotos(Array.from(e.target.files || []))}
-                />
 
                 {/* Disclaimer */}
                 <div style={{ background: '#fdf9f5', border: '1px solid rgba(139,94,60,0.2)', padding: '16px 20px', fontFamily: 'var(--font-sans)', fontSize: '12px', color: '#888', lineHeight: 1.8 }}>
-                  ⚠️ <strong>Note:</strong> Based on your inputs + optional photos, our AI will estimate your best Asuka size. Photos are used only to infer body proportions — no facial data is processed. This is a recommendation, not a guarantee.
+                  ⚠️ <strong>Note:</strong> Photos help our AI infer body proportions. This is for recommendation purposes only and no facial data is stored or processed.
                 </div>
               </div>
 
               <div style={{ display: 'flex', gap: '16px' }}>
                 <button type="button" onClick={() => setStep(1)} style={{ flex: 1, padding: '16px', border: '1px solid rgba(0,0,0,0.15)', background: 'white', fontFamily: 'var(--font-mono)', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', cursor: 'pointer' }}>← Back</button>
                 <button type="button" onClick={handleFinish} disabled={loading} style={{ flex: 3, padding: '16px', background: loading ? '#ccc' : BRAND, color: 'white', border: 'none', fontFamily: 'var(--font-mono)', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer' }}>
-                  {loading ? 'Analyzing...' : 'Get My Asuka Size →'}
+                  {loading ? 'Analyzing Profile...' : 'Get My Asuka Size →'}
                 </button>
               </div>
             </div>

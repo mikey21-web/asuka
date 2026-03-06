@@ -28,7 +28,7 @@ export default function AIStylistPage() {
 
                 <div className="w-full max-w-4xl mx-auto flex-1 h-[600px] mb-20 shadow-[0_20px_40px_rgba(26,20,16,0.05)] rounded-2xl overflow-hidden border border-[#e0d5c8] bg-white">
                     {/* Reusing the AI Widget logic inline, specifically for chat tabs */}
-                    <AIWidget initialTab="style" />
+                    <AIWidget />
                 </div>
             </main>
 

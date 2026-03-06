@@ -5,7 +5,7 @@ import { FOOTER_CONTACT, FOOTER_LEGALS } from '@/lib/site-data'
 export default function Footer() {
   return (
     <footer
-      style={{ background: '#1a1410', color: '#fffdfd', borderTop: '1px solid rgba(143,101,77,0.1)' }}
+      style={{ background: '#2c2218', color: '#fffdfd', borderTop: '2px solid #a17a58' }}
       className="py-16 px-6 sm:py-24 sm:px-10"
     >
       <div className="max-w-[1200px] mx-auto">
@@ -16,7 +16,7 @@ export default function Footer() {
             <h4 style={{ fontFamily: 'var(--font-sans)', fontSize: '14px', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'white', marginBottom: '20px' }}>Contact us</h4>
             {FOOTER_CONTACT.stores.map(s => (
               <div key={s.city} style={{ marginBottom: '16px' }}>
-                <div style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'rgba(255,255,255,0.7)', marginBottom: '4px' }}>
+                <div style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'rgba(255,255,255,0.85)', marginBottom: '4px' }}>
                   {s.city} -: {s.address}
                 </div>
                 <a href={s.map} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', color: '#a17a58', textDecoration: 'underline', textUnderlineOffset: '3px' }}>
@@ -33,9 +33,9 @@ export default function Footer() {
               {FOOTER_LEGALS.map(link => (
                 <li key={link.name} style={{ marginBottom: '10px' }}>
                   <a href={link.href} target={link.href.startsWith('http') ? '_blank' : undefined} rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                    style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', transition: 'color 0.2s' }}
+                    style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'rgba(255,255,255,0.75)', textDecoration: 'none', transition: 'color 0.2s' }}
                     onMouseEnter={e => e.currentTarget.style.color = '#a17a58'}
-                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}>
+                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.75)'}>
                     {link.name}
                   </a>
                 </li>
@@ -46,7 +46,7 @@ export default function Footer() {
           {/* Newsletter */}
           <div>
             <h4 style={{ fontFamily: 'var(--font-sans)', fontSize: '14px', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'white', marginBottom: '20px' }}>Newsletter</h4>
-            <p style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'rgba(255,255,255,0.6)', marginBottom: '20px', lineHeight: 1.6 }}>Subscribe to get special offers, free giveaways, and once-in-a-lifetime deals.</p>
+            <p style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'rgba(255,255,255,0.75)', marginBottom: '20px', lineHeight: 1.6 }}>Subscribe to get special offers, free giveaways, and once-in-a-lifetime deals.</p>
             <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.2)', paddingBottom: '8px' }}>
               <input type="email" placeholder="E-mail" style={{ background: 'none', border: 'none', color: 'white', fontFamily: 'var(--font-sans)', fontSize: '13px', width: '100%', outline: 'none' }} />
               <button type="button" style={{ background: 'none', border: 'none', color: '#a17a58', fontFamily: 'var(--font-sans)', fontSize: '12px', letterSpacing: '1px', cursor: 'pointer', whiteSpace: 'nowrap' }}>Subscribe</button>
@@ -57,12 +57,12 @@ export default function Footer() {
           <div>
             <h4 style={{ fontFamily: 'var(--font-sans)', fontSize: '14px', fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase', color: 'white', marginBottom: '20px' }}>Support</h4>
             <div style={{ marginBottom: '12px' }}>
-              <div style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'rgba(255,255,255,0.6)', marginBottom: '4px' }}>Contact No -:</div>
-              <a href="tel:9063356542" style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'rgba(255,255,255,0.8)', textDecoration: 'none' }}>{FOOTER_CONTACT.phone}</a>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'rgba(255,255,255,0.75)', marginBottom: '4px' }}>Contact No -:</div>
+              <a href="tel:9063356542" style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'rgba(255,255,255,0.9)', textDecoration: 'none' }}>{FOOTER_CONTACT.phone}</a>
             </div>
             <div>
-              <div style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'rgba(255,255,255,0.6)', marginBottom: '4px' }}>Mail ID -:</div>
-              <a href={`mailto:${FOOTER_CONTACT.email}`} style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'rgba(255,255,255,0.8)', textDecoration: 'none' }}>{FOOTER_CONTACT.email}</a>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'rgba(255,255,255,0.75)', marginBottom: '4px' }}>Mail ID -:</div>
+              <a href={`mailto:${FOOTER_CONTACT.email}`} style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'rgba(255,255,255,0.9)', textDecoration: 'none' }}>{FOOTER_CONTACT.email}</a>
             </div>
             {/* Social */}
             <div style={{ display: 'flex', gap: '16px', marginTop: '24px' }}>
@@ -92,7 +92,7 @@ export default function Footer() {
 
         {/* Payment + Copyright */}
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '24px', gap: '20px' }} className="flex flex-col sm:flex-row justify-between items-center">
-          <div style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', color: 'rgba(255,255,255,0.55)' }}>
             © {new Date().getFullYear()} Asuka Couture
           </div>
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>

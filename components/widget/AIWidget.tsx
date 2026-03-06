@@ -65,7 +65,7 @@ function GarmentPreview({ summary, prompt }: { summary: string | null, prompt?: 
   const imgUrl = genPrompt ? `https://image.pollinations.ai/prompt/${encodeURIComponent(genPrompt)}?width=600&height=800&nologo=true&seed=${summary?.length || 42}` : null
 
   return (
-    <div style={{ width: '100%', aspectRatio: '2/3', maxHeight: '280px', border: '1px solid #d4c4b0', marginBottom: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', background: summary ? bg : '#FAF6F1', transition: 'background 0.5s ease', borderRadius: '8px' }}>
+    <div style={{ width: '100%', aspectRatio: '2/3', maxHeight: '280px', border: '1px solid var(--gold-border)', marginBottom: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', background: summary ? bg : 'var(--paper)', transition: 'background 0.5s ease', borderRadius: '8px' }}>
       {imgUrl ? (
         <>
           <img
@@ -76,8 +76,8 @@ function GarmentPreview({ summary, prompt }: { summary: string | null, prompt?: 
             onLoad={() => setImgLoaded(true)}
           />
           {!imgLoaded && (
-            <div className="animate-pulse" style={{ position: 'absolute', inset: 0, background: 'rgba(201,168,76,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: '#a17a58', letterSpacing: '2px' }}>WEAVING YOUR DESIGN…</span>
+            <div className="animate-pulse" style={{ position: 'absolute', inset: 0, background: 'var(--gold-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--gold)', letterSpacing: '2px' }}>WEAVING YOUR DESIGN…</span>
             </div>
           )}
         </>
@@ -311,57 +311,6 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
   )
 }
 
-/* ══════════════════════════
-   SIZER PANEL
-══════════════════════════ */
-export function SizerPanel() {
-  const [step, setStep] = useState(1);
-  const [brand, setBrand] = useState('');
-  const [type, setType] = useState('shirt');
-  const [size, setSize] = useState('');
-  const [result, setResult] = useState<any>(null);
-
-  const brands = ['Zara', 'H&M', 'Raymond', 'Manyavar', 'Louis Philippe'];
-  const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
-
-  const handleCalculate = () => {
-    // Simple mock logic for the panel version
-    const mapped = size === 'M' ? '40' : size === 'L' ? '42' : 'Custom';
-    setResult({ primary: mapped, confidence: 'High' });
-    setStep(2);
-  };
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '20px', background: 'white' }}>
-      {step === 1 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '10px', color: '#999', marginBottom: '8px', textTransform: 'uppercase' }}>Select Brand</label>
-            <select value={brand} onChange={e => setBrand(e.target.value)} style={{ width: '100%', padding: '12px', border: '1px solid #eee', outline: 'none' }}>
-              <option value="">Select Brand</option>
-              {brands.map(b => <option key={b} value={b}>{b}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={{ display: 'block', fontSize: '10px', color: '#999', marginBottom: '8px' }}>SELECT SIZE</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {sizes.map(s => (
-                <button key={s} onClick={() => setSize(s)} style={{ width: '45px', height: '45px', border: '1px solid #eee', background: size === s ? '#1a1410' : 'white', color: size === s ? 'white' : '#1a1410', fontSize: '12px' }}>{s}</button>
-              ))}
-            </div>
-          </div>
-          <button onClick={handleCalculate} disabled={!brand || !size} style={{ marginTop: '10px', padding: '15px', background: '#1a1410', color: 'white', border: 'none', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '2px' }}>Map to Asuka →</button>
-        </div>
-      ) : (
-        <div style={{ textAlign: 'center', padding: '40px 0' }}>
-          <div style={{ fontSize: '10px', color: '#a17a58', marginBottom: '10px', textTransform: 'uppercase' }}>Your Asuka Size</div>
-          <div style={{ fontSize: '64px', fontWeight: 300, color: '#1a1410', marginBottom: '20px' }}>{result.primary}</div>
-          <button onClick={() => setStep(1)} style={{ fontSize: '10px', color: '#999', background: 'none', border: 'none', textDecoration: 'underline' }}>RESET</button>
-        </div>
-      )}
-    </div>
-  );
-}
 
 /* ══════════════════════════
    MAIN WIDGET
@@ -411,21 +360,46 @@ export default function AIWidget({ isFloating = false }: { isFloating?: boolean 
     return null;
   }
 
+  /* State for the Stylist Chat */
+  const [chatKey, setChatKey] = useState(0)
+
+  const handleStartOver = () => {
+    localStorage.removeItem('asuka_chat_style')
+    setChatKey(prev => prev + 1)
+  }
+
   const widgetContent = (
-    <div className={`w-full flex flex-col bg-[#FAF6F1] overflow-hidden ${isFloating ? 'h-full sm:rounded-2xl' : 'border border-[#d4c4b0] shadow-sm rounded-xl min-h-[500px]'}`}>
-      <div className="flex items-center justify-center bg-[#f5ede3] border-b border-[#d4c4b0] flex-shrink-0 h-[50px] sm:h-[60px]">
-        <span className="text-[9px] sm:text-[10px] font-mono tracking-[3px] uppercase text-[#a17a58] font-bold">
-          AI Personal Stylist
-        </span>
+    <div className={`w-full flex flex-col bg-[var(--paper)] overflow-hidden ${isFloating ? 'h-full sm:rounded-2xl' : 'border border-[var(--gold-border)] shadow-sm rounded-xl min-h-[500px]'}`}>
+      <div className="flex flex-col bg-[var(--paper2)] border-b border-[var(--gold-border)] flex-shrink-0">
+        <div className="flex items-center justify-between px-4 h-[50px] sm:h-[60px]">
+          <button
+            onClick={handleStartOver}
+            className="flex items-center gap-1 text-[8px] font-mono uppercase tracking-widest text-[var(--gold)] hover:opacity-70 transition-opacity"
+            title="Clear Chat"
+          >
+            <RefreshCw className="w-3 h-3" />
+            <span>Start Over</span>
+          </button>
+          <span className="text-[10px] font-mono tracking-[3px] uppercase text-[var(--gold)] font-bold">
+            AI Personal Stylist
+          </span>
+          <div className="w-8" /> {/* spacer */}
+          {isFloating && (
+            <button onClick={() => setOpen(false)} className="p-2 text-[var(--gold)] hover:opacity-70">
+              <X className="w-5 h-5" />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 flex flex-col overflow-hidden relative" style={{ minHeight: 0 }}>
         <ChatPanel
+          key={chatKey}
           endpoint="/api/stylist"
           persona="style"
           showPreview={false}
           quickPrompts={['Wedding guest', 'Groom · sangeet', 'Office ethnic', 'Beach wedding', 'Eid look', 'Diwali party']}
-          systemHeight={isFloating ? 240 : 300}
+          systemHeight={isFloating ? 500 : 600}
         />
       </div>
     </div>
@@ -439,25 +413,15 @@ export default function AIWidget({ isFloating = false }: { isFloating?: boolean 
       {!open && (
         <div className="fixed bottom-5 right-4 sm:bottom-7 sm:right-7 z-[9998] flex flex-col gap-3 items-end">
 
-          {/* 1. AI SIZER (Opens modal if on product, otherwise link to sizer page) */}
-          <button
-            onClick={() => {
-              // Priority: Trigger current page sizer modal if it exists
-              window.dispatchEvent(new CustomEvent('openAsukaPanel', { detail: { tab: 'sizer' } }));
-            }}
-            className="bg-white/90 backdrop-blur-xl text-[#1a1410] w-[48px] h-[48px] sm:w-[56px] sm:h-[56px] rounded-full flex items-center justify-center shadow-[0_4px_14px_rgba(0,0,0,0.15)] ring-1 ring-black/5 hover:scale-110 transition-all group relative border border-[#a17a58]/20"
-          >
-            <Ruler className="w-5 h-5 sm:w-6 sm:h-6 text-[#a17a58]" />
-            {/* Tooltip on hover */}
-            <span className="absolute right-full mr-3 bg-[#1a1410] text-white text-[9px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap tracking-widest font-mono pointer-events-none">AI SIZER</span>
-          </button>
+
+
 
           {/* 2. AI ATELIER (Link to MIY) */}
           <Link
             href="/make-it-yourself"
-            className="bg-white/90 backdrop-blur-xl text-[#1a1410] w-[48px] h-[48px] sm:w-[56px] sm:h-[56px] rounded-full flex items-center justify-center shadow-[0_4px_14px_rgba(0,0,0,0.15)] ring-1 ring-black/5 hover:scale-110 transition-all group relative border border-[#a17a58]/20"
+            className="bg-white/90 backdrop-blur-xl text-[#1a1410] w-[48px] h-[48px] sm:w-[56px] sm:h-[56px] rounded-full flex items-center justify-center shadow-[0_4px_14px_rgba(0,0,0,0.15)] ring-1 ring-black/5 hover:scale-110 transition-all group relative border border-[var(--gold-border)]"
           >
-            <Scissors className="w-5 h-5 sm:w-6 sm:h-6 text-[#a17a58]" />
+            <Scissors className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--gold)]" />
             <span className="absolute right-full mr-3 bg-[#1a1410] text-white text-[9px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap tracking-widest font-mono pointer-events-none">AI ATELIER</span>
           </Link>
 
@@ -467,12 +431,12 @@ export default function AIWidget({ isFloating = false }: { isFloating?: boolean 
             className="group flex items-center gap-3 cursor-pointer hover:scale-[1.02] transition-transform duration-300"
             aria-label="Open AI Assistant"
           >
-            <div className="bg-white px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.1)] text-[#1a1410] font-sans font-medium text-[12px] sm:text-[13px] flex items-center gap-1 sm:gap-2 border border-[#a17a58]/20">
+            <div className="bg-white px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.1)] text-[#1a1410] font-sans font-medium text-[12px] sm:text-[13px] flex items-center gap-1 sm:gap-2 border border-[var(--gold-border)]">
               Chat with us <span className="text-sm sm:text-lg">👋</span>
             </div>
-            <div className="relative w-[48px] h-[48px] sm:w-[56px] sm:h-[56px] bg-[#1a1410] rounded-full flex items-center justify-center shadow-[0_4px_14px_rgba(0,0,0,0.15)] ring-1 ring-[#a17a58]/30">
-              <Sparkles className="w-[24px] h-[24px] sm:w-[30px] sm:h-[30px] text-[#a17a58] animate-pulse" />
-              <div className="absolute -top-1 -right-1 w-[18px] h-[18px] sm:w-[22px] sm:h-[22px] bg-[#a17a58] text-white text-[9px] sm:text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-[#1a1410]">
+            <div className="relative w-[48px] h-[48px] sm:w-[56px] sm:h-[56px] bg-[var(--gold)] rounded-full flex items-center justify-center shadow-[0_4px_14px_rgba(145,108,76,0.4)] ring-1 ring-white/20">
+              <Sparkles className="w-[24px] h-[24px] sm:w-[30px] sm:h-[30px] text-white animate-pulse" />
+              <div className="absolute -top-1 -right-1 w-[18px] h-[18px] sm:w-[22px] sm:h-[22px] bg-white text-[var(--gold)] text-[9px] sm:text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-[var(--gold)]">
                 1
               </div>
             </div>
@@ -483,8 +447,7 @@ export default function AIWidget({ isFloating = false }: { isFloating?: boolean 
       {open && (
         <>
           <div className="fixed inset-0 bg-black/40 z-[9998] sm:hidden animate-fadeIn" onClick={() => setOpen(false)} />
-          <div className="fixed bottom-0 left-0 right-0 sm:right-auto sm:left-7 sm:bottom-24 z-[9999] w-full sm:w-[380px] h-[85vh] sm:h-[600px] max-h-[85vh] flex flex-col animate-panelOpen shadow-[0_-10px_40px_rgba(0,0,0,0.15)] sm:shadow-2xl rounded-t-2xl sm:rounded-2xl overflow-hidden border border-[#e0d5c8] bg-white sm:mt-0">
-            <button onClick={() => setOpen(false)} className="absolute top-2 right-2 sm:top-4 sm:right-4 z-[100] w-8 h-8 flex items-center justify-center bg-[#f5ede3] rounded-full text-[#a17a58] hover:bg-[#a17a58] hover:text-white transition-colors">✕</button>
+          <div className="fixed bottom-0 left-0 right-0 sm:left-auto sm:right-7 sm:bottom-24 z-[9999] w-full sm:w-[350px] h-[85vh] sm:h-[560px] max-h-[85vh] flex flex-col animate-panelOpen shadow-[0_-10px_40px_rgba(0,0,0,0.15)] sm:shadow-2xl rounded-t-2xl sm:rounded-2xl overflow-hidden border border-[#e0d5c8] bg-white sm:mt-0">
             {widgetContent}
           </div>
         </>

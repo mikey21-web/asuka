@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+export const dynamic = 'force-dynamic'
 import { Groq } from 'groq-sdk'
 import { getAllProducts } from '@/lib/catalog'
 

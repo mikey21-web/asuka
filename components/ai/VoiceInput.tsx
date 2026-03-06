@@ -88,21 +88,20 @@ export default function VoiceInput({ onTranscription, isChatLoading }: VoiceInpu
     if (!recog || isChatLoading) return
 
     if (isListening) {
-      console.log('VoiceInput: Stopping manually')
-      try { recog.stop() } catch (e) { console.error(e) }
+      try { recog.stop() } catch (e) { }
     } else {
       setErrorStatus(null)
       setInterimText('')
       try {
-        console.log('VoiceInput: Starting...')
         recog.start()
       } catch (e) {
-        console.warn('VoiceInput: Start failed, attempting abort and restart')
         try {
           recog.abort()
-          setTimeout(() => recog.start(), 300)
+          const t = setTimeout(() => {
+            try { recog.start() } catch { }
+          }, 400)
+          return () => clearTimeout(t)
         } catch (err) {
-          console.error('VoiceInput: Critical start error', err)
           setErrorStatus('start-failed')
         }
       }
@@ -112,36 +111,17 @@ export default function VoiceInput({ onTranscription, isChatLoading }: VoiceInpu
   if (!recognition && !errorStatus) return null
 
   return (
-    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+    <div className="relative flex items-center">
       {(errorStatus || (isListening && interimText)) && (
-        <div style={{
-          position: 'absolute',
-          bottom: '100%',
-          right: 0,
-          marginBottom: '10px',
-          background: '#1a1410',
-          color: 'white',
-          padding: '8px 12px',
-          borderRadius: '6px',
-          fontSize: '10px',
-          fontFamily: 'var(--font-mono)',
-          whiteSpace: 'nowrap',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          zIndex: 100,
-          pointerEvents: 'none',
-          animation: 'fadeUp 0.3s ease',
-          maxWidth: '220px',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis'
-        }}>
+        <div className="absolute bottom-full right-0 mb-3 bg-[#1a1410] text-white px-3 py-2 rounded-lg text-[10px] font-mono whitespace-nowrap shadow-xl z-[100] animate-fadeUp max-w-[200px] overflow-hidden text-ellipsis">
           {errorStatus ? (
-            errorStatus === 'not-allowed' ? '⚠️ MIC ACCESS DENIED' :
-              errorStatus === 'no-speech' ? 'TRY SPEAKING LOUDER...' :
+            errorStatus === 'not-allowed' ? 'MIC ACCESS DENIED' :
+              errorStatus === 'no-speech' ? 'SPEAK CLEARLY...' :
                 `ERROR: ${errorStatus.toUpperCase()}`
           ) : (
-            `Hearing: "${interimText}..."`
+            `"${interimText}..."`
           )}
-          <div style={{ position: 'absolute', top: '100%', right: '14px', border: '6px solid transparent', borderTopColor: '#1a1410' }} />
+          <div className="absolute top-full right-4 border-[6px] border-transparent border-t-[#1a1410]" />
         </div>
       )}
 
@@ -149,47 +129,21 @@ export default function VoiceInput({ onTranscription, isChatLoading }: VoiceInpu
         onClick={toggleListening}
         disabled={isChatLoading || errorStatus === 'not-supported'}
         type="button"
-        title={isListening ? 'Stop listening' : 'Speak your message'}
-        style={{
-          width: '38px',
-          height: '38px',
-          borderRadius: '50%',
-          background: isListening ? '#c0392b' : (errorStatus ? '#666' : '#a17a58'),
-          border: 'none',
-          cursor: (isChatLoading || errorStatus === 'not-supported') ? 'not-allowed' : 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative',
-          opacity: isChatLoading ? 0.5 : 1,
-          transition: 'all 0.2s',
-          boxShadow: isListening
-            ? '0 0 0 4px rgba(192,57,43,0.25)'
-            : '0 2px 8px rgba(139,94,60,0.35)',
-          flexShrink: 0,
-        }}
+        className={`w-[38px] h-[38px] rounded-full flex items-center justify-center transition-all duration-300 relative ${isListening ? 'bg-[#c0392b] shadow-[0_0_15px_rgba(192,57,43,0.4)]' : 'bg-[#f5ede3] hover:bg-[#a17a58] text-[#a17a58] hover:text-white border border-[#d4c4b0]/50'
+          } ${isChatLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+        title={isListening ? 'Stop' : 'Voice Search'}
       >
-        {/* Pulse ring when listening */}
         {isListening && (
-          <span className="animate-ping" style={{
-            position: 'absolute',
-            width: '100%',
-            height: '100%',
-            borderRadius: '50%',
-            background: 'rgba(192,57,43,0.4)',
-          }} />
+          <span className="absolute inset-0 rounded-full animate-ping bg-[#c0392b]/30" />
         )}
 
-        {/* Mic icon — white stroke, always visible */}
         <svg
-          width="16" height="16"
+          width="18" height="18"
           viewBox="0 0 24 24"
           fill="none"
-          stroke="white"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{ position: 'relative', zIndex: 1, opacity: errorStatus === 'not-supported' ? 0.3 : 1 }}
+          stroke="currentColor"
+          strokeWidth="2"
+          className="relative z-10"
         >
           <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
           <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
@@ -198,22 +152,7 @@ export default function VoiceInput({ onTranscription, isChatLoading }: VoiceInpu
         </svg>
 
         {errorStatus && errorStatus !== 'no-speech' && (
-          <div style={{
-            position: 'absolute',
-            top: '-5px',
-            right: '-5px',
-            width: '14px',
-            height: '14px',
-            background: '#c0392b',
-            color: 'white',
-            borderRadius: '50%',
-            fontSize: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 'bold',
-            border: '1px solid white'
-          }}>!</div>
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#c0392b] text-white rounded-full text-[8px] flex items-center justify-center font-bold border border-white">!</div>
         )}
       </button>
 

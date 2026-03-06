@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+export const dynamic = 'force-dynamic'
 import { Groq } from 'groq-sdk'
 import { getAllProducts } from '@/lib/catalog'
 
@@ -11,6 +12,17 @@ const groq = new Groq({
 const CHAT_HISTORY: Record<string, any[]> = {}
 
 export async function POST(req: Request) {
+  // CORS Headers
+  const headers = {
+    'Access-Control-Allow-Origin': '*', // Replace with client's shopify domain in production
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  }
+
+  if (req.method === 'OPTIONS') {
+    return new NextResponse(null, { headers })
+  }
+
   try {
     const { message, session_id } = await req.json()
     if (!message) return NextResponse.json({ error: 'Message is required' }, { status: 400 })
@@ -113,7 +125,7 @@ Rule 2: If the user's message is completely unrelated to clothing, fashion, tail
     return NextResponse.json({
       reply: parsedResponse.reply,
       products_mentioned: finalProducts
-    })
+    }, { headers })
 
   } catch (error) {
     console.error('Stylist API Error:', error)

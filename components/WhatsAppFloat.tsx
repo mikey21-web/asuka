@@ -6,7 +6,7 @@ export default function WhatsAppFloat() {
             href="https://wa.me/919063356542"
             target="_blank"
             rel="noopener noreferrer"
-            className="animate-fadeUp fixed bottom-5 left-4 sm:bottom-7 sm:left-7 z-[9998] w-[48px] h-[48px] sm:w-[52px] sm:h-[52px] bg-[#a17a58] text-white rounded-full flex items-center justify-center shadow-[0_4px_14px_rgba(143,101,77,0.35)] cursor-pointer hover:scale-110 transition-transform duration-300"
+            className="animate-fadeUp fixed bottom-5 left-4 sm:bottom-7 sm:left-7 z-[9998] w-[48px] h-[48px] sm:w-[52px] sm:h-[52px] bg-[#25D366] text-white rounded-full flex items-center justify-center shadow-[0_4px_14px_rgba(37,211,102,0.4)] cursor-pointer hover:scale-110 hover:shadow-[0_6px_20px_rgba(37,211,102,0.5)] transition-all duration-300"
             aria-label="Chat on WhatsApp"
         >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
