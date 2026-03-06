@@ -190,7 +190,7 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
         setStreamingText(null)
         setMsgs(m => [...m, { role: 'assistant', content: text, products }])
         setLoading(false)
-        inputRef.current?.focus()
+        inputRef.current?.focus({ preventScroll: true })
       }
     }, 20) // 20ms per word = snappier feel
     return timer

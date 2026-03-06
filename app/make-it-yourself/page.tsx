@@ -58,6 +58,7 @@ export default function MakeItYourself() {
     const chatContainerRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
         if (step === 3 && chatContainerRef.current) {
             chatContainerRef.current.scrollTo({
                 top: chatContainerRef.current.scrollHeight,
@@ -289,8 +290,8 @@ Please connect me with a tailor to finalize.`
 
                         {/* Step 3: Chat */}
                         {step === 3 && (
-                            <div className="animate-in fade-in scale-in-95 duration-700 h-full flex flex-col">
-                                <div className="text-center mb-6">
+                            <div className="animate-in fade-in scale-in-95 duration-700 h-[70vh] min-h-[500px] max-h-[800px] flex flex-col">
+                                <div className="text-center mb-6 shrink-0">
                                     <h2 className="text-xl font-serif italic mb-2 text-[#1a1410]">Conversational Curator</h2>
                                     <p className="text-[10px] uppercase tracking-widest text-[#a17a58]">Designing for your {occasion}...</p>
                                 </div>
