@@ -142,21 +142,26 @@ export default function MakeItYourself() {
     }
 
     const finalizeBrief = () => {
-        return `Namaste! My Bespoke Design Brief:
---------------------------------
-OCCASION: ${occasion} in ${city || 'Indoors'}
-VIBE: ${vibe < 40 ? 'Classic' : vibe > 60 ? 'Bold' : 'Balanced'}
-BUDGET: ${budget}
-COLORS: ${colors} (Avoid: ${avoidColors})
+        return `Asuka Couture Bespoke Commission Brief:
+---------------------------------------------
+COLLECTION: Make It Yourself Atelier
+---------------------------------------------
+CLIENT REQUEST: ${occasion} for ${city || 'Indoors'} location.
+VIBE: ${vibe < 40 ? 'Understated Heritage' : vibe > 60 ? 'Bold Statement' : 'Contemporary Classic'}
+BUDGETARY SCOPE: ${budget}
+PALETTE: ${colors} (Excluding: ${avoidColors})
 
-CLIENT: ${height}/${weight} | ${skin} skin | ${fit} fit
-OWNING: ${ownedItems || 'None mentioned'}
+SPECIFICATIONS:
+- Physique: ${height}, ${weight}
+- Desired Fit: ${fit}
+- Silhouette: ${selectedLook?.name}
+- Detailings: ${lapel}, ${buttons} accents, ${embroidery} embroidery, ${lining} lining.
+- Custom Monogram: ${monogram || 'Standard'}
 
-CHOSEN LOOK: ${selectedLook?.name}
-DETAILS: ${lapel}, ${buttons} buttons, ${embroidery} embroidery, ${lining} lining.
-MONOGRAM: ${monogram || 'None'}
+INSPIRATION & CONTEXT:
+${ownedItems ? `Matching with: ${ownedItems}` : 'Fresh heritage design.'}
 
-Please connect me with a tailor to finalize.`
+Please assign a Master Draper to finalize this commission.`
     }
 
     const inputClasses = "w-full border-b border-gray-200 py-3 bg-transparent outline-none focus:border-[#a17a58] transition-colors text-sm font-light placeholder:text-gray-300"
@@ -306,7 +311,9 @@ Please connect me with a tailor to finalize.`
                                 </div>
                                 <div className="mt-16 flex flex-col sm:flex-row justify-between gap-4">
                                     <button onClick={() => setStep(1)} className="px-8 py-4 text-xs uppercase tracking-[3px] text-gray-400 hover:text-[#a17a58] transition-all order-2 sm:order-1">← Back</button>
-                                    <button onClick={() => setStep(3)} className="bg-[#1a1410] text-white px-12 py-4 text-xs uppercase tracking-[3px] hover:bg-[#a17a58] transition-all order-1 sm:order-2">Talk to AI Designer →</button>
+                                    <button onClick={() => setStep(3)} className="bg-[#1a1410] text-white px-12 py-4 text-[11px] font-bold uppercase tracking-[4px] hover:bg-[#a17a58] transition-all order-1 sm:order-2 shadow-[0_10px_30px_rgba(0,0,0,0.1)] hover:shadow-[0_15px_40px_rgba(161,122,88,0.2)]">
+                                        Enter Design Room →
+                                    </button>
                                 </div>
                             </div>
                         )}
@@ -331,7 +338,7 @@ Please connect me with a tailor to finalize.`
                                             <div className="w-1 h-1 bg-[#a17a58] rounded-full animate-bounce" />
                                             <div className="w-1 h-1 bg-[#a17a58] rounded-full animate-bounce [animation-delay:0.2s]" />
                                             <div className="w-1 h-1 bg-[#a17a58] rounded-full animate-bounce [animation-delay:0.4s]" />
-                                            <span className="text-[10px] uppercase tracking-widest text-[#a17a58] ml-2 font-medium">Atelier is thinking...</span>
+                                            <span className="text-[10px] uppercase tracking-widest text-[#a17a58] ml-2 font-medium">Consulting our Master Artisans...</span>
                                         </div>
                                     )}
 
@@ -357,18 +364,38 @@ Please connect me with a tailor to finalize.`
                                     )}
                                 </div>
 
-                                <div className="flex gap-2">
-                                    <input
-                                        className="flex-1 border-gray-100 border bg-[#fafafa] rounded-sm px-6 py-4 text-sm font-light outline-none focus:border-[#a17a58] transition-all shadow-inner"
-                                        placeholder="Discuss textures, themes, or colors..."
-                                        value={msg}
-                                        onChange={e => setMsg(e.target.value)}
-                                        onKeyDown={e => e.key === 'Enter' && handleChat()}
-                                        disabled={loading}
-                                    />
-                                    <button onClick={handleChat} disabled={loading} className="bg-[#a17a58] text-white px-8 py-4 text-xs uppercase tracking-[2px] hover:bg-[#1a1410] transition-all shadow-md">
-                                        Send
-                                    </button>
+                                <div className="flex flex-col gap-3">
+                                    {chatLog.length === 1 && !loading && (
+                                        <div className="flex flex-wrap gap-2 px-2 animate-in fade-in duration-1000 mb-2">
+                                            {[
+                                                'Suggest a Regal Groom Look',
+                                                'Minimalist Summer Styles',
+                                                'Silk Velvet Details',
+                                                'Classic Bandhgala Trends'
+                                            ].map(opt => (
+                                                <button
+                                                    key={opt}
+                                                    onClick={() => { setMsg(opt); handleChat(); }}
+                                                    className="px-3 py-1.5 rounded-full border border-[#a17a58]/30 bg-white hover:bg-[#a17a58] hover:text-white text-[9px] uppercase tracking-widest text-[#a17a58] transition-all"
+                                                >
+                                                    {opt}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <div className="flex gap-2">
+                                        <input
+                                            className="flex-1 border-gray-100 border bg-[#fafafa] rounded-sm px-6 py-4 text-sm font-light outline-none focus:border-[#a17a58] transition-all shadow-inner"
+                                            placeholder="Discuss textures, themes, or colors..."
+                                            value={msg}
+                                            onChange={e => setMsg(e.target.value)}
+                                            onKeyDown={e => e.key === 'Enter' && handleChat()}
+                                            disabled={loading}
+                                        />
+                                        <button onClick={handleChat} disabled={loading} className="bg-[#a17a58] text-white px-8 py-4 text-xs uppercase tracking-[2px] hover:bg-[#1a1410] transition-all shadow-md">
+                                            Send
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -403,10 +430,10 @@ Please connect me with a tailor to finalize.`
                                     )}
                                 </div>
                                 {conceptImg === null && !imgLoading && (
-                                    <div className="mt-8 p-6 border border-[#a17a58]/20 bg-[#a17a58]/5 rounded-sm max-w-lg mx-auto">
-                                        <p className="text-sm font-light text-[#1a1410] mb-4">Our designers are hand-sketching your visualization. Please click below to refresh the atelier view.</p>
-                                        <button onClick={() => selectedLook && generateConcept(selectedLook)} className="text-[10px] uppercase tracking-[2px] bg-[#1a1410] text-white px-6 py-2 hover:bg-[#a17a58] transition-all">
-                                            Refresh Designer Sketch
+                                    <div className="mt-8 p-6 border border-[#a17a58]/20 bg-[#a17a58]/5 rounded-sm max-w-lg mx-auto transition-all">
+                                        <p className="text-sm font-light text-[#1a1410] mb-4">Our artisans are preparing your unique curation. Click below to view the draft.</p>
+                                        <button onClick={() => selectedLook && generateConcept(selectedLook)} className="text-[10px] uppercase tracking-[2px] bg-[#1a1410] text-white px-8 py-3 hover:bg-[#a17a58] transition-all shadow-md">
+                                            View Curated Concept
                                         </button>
                                     </div>
                                 )}
