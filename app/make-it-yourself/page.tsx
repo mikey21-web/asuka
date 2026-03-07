@@ -43,6 +43,11 @@ export default function MakeItYourself() {
     const [chatLog, setChatLog] = useState<{ role: string, content: string }[]>([])
     const [imagePrompt, setImagePrompt] = useState<string | null>(null)
 
+    // Step 3.5: Lead Capture
+    const [clientName, setClientName] = useState('')
+    const [clientContact, setClientContact] = useState('')
+    const [pendingLook, setPendingLook] = useState<Look | null>(null)
+
     // Step 4: Concept Img
     const [selectedLook, setSelectedLook] = useState<Look | null>(null)
     const [conceptImg, setConceptImg] = useState<string | null>(null)
@@ -117,6 +122,15 @@ export default function MakeItYourself() {
     }
 
     const generateConcept = async (look: Look) => {
+        if (!clientContact) {
+            setPendingLook(look)
+            setStep(3.5)
+            return
+        }
+        await startVisualization(look)
+    }
+
+    const startVisualization = async (look: Look) => {
         setSelectedLook(look)
         setStep(4)
         setImgLoading(true)
@@ -171,6 +185,7 @@ export default function MakeItYourself() {
     const finalizeBrief = () => {
         return `Asuka Couture Bespoke Commission Brief:
 ---------------------------------------------
+CLIENT: ${clientName} (${clientContact})
 COLLECTION: Make It Yourself Atelier
 ---------------------------------------------
 CLIENT REQUEST: ${occasion} for ${city || 'Indoors'} location.
@@ -427,25 +442,77 @@ Please assign a Master Draper to finalize this commission.`
                             </div>
                         )}
 
+                        {/* Step 3.5: Bespoke Enrollment */}
+                        {step === 3.5 && (
+                            <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 max-w-lg mx-auto text-center py-12 px-6">
+                                <div className="mb-10">
+                                    <span className="text-[9px] uppercase tracking-[5px] text-[#a17a58] font-bold block mb-4 underline decoration-[#a17a58]/30 underline-offset-8">Private Commission</span>
+                                    <h2 className="text-3xl font-serif italic mb-4 text-[#1a1410]">Enroll in the Atelier</h2>
+                                    <p className="text-gray-500 font-light text-sm">
+                                        Access our High-Performance Designer Engine. Your contact details allow us to preserve your vision and assign a Senior Artisan to your bespoke brief.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-8 bg-white p-10 border-t-2 border-[#a17a58] rounded-sm shadow-2xl relative overflow-hidden">
+                                    <div className="text-left">
+                                        <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold mb-3 block">Full Name</label>
+                                        <input
+                                            className="w-full bg-[#fafafa] border-b border-gray-200 py-4 px-2 outline-none focus:border-[#a17a58] transition-all text-sm font-light"
+                                            value={clientName}
+                                            onChange={e => setClientName(e.target.value)}
+                                            placeholder="Inderpreet Singh"
+                                        />
+                                    </div>
+                                    <div className="text-left">
+                                        <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold mb-3 block">WhatsApp for Verification</label>
+                                        <input
+                                            className="w-full bg-[#fafafa] border-b border-gray-200 py-4 px-2 outline-none focus:border-[#a17a58] transition-all text-sm font-light"
+                                            value={clientContact}
+                                            onChange={e => setClientContact(e.target.value)}
+                                            placeholder="+91 99999 00000"
+                                        />
+                                    </div>
+
+                                    <button
+                                        onClick={() => pendingLook && startVisualization(pendingLook)}
+                                        disabled={!clientName || !clientContact}
+                                        className="w-full bg-[#1a1410] text-white py-6 text-[11px] font-bold uppercase tracking-[4px] hover:bg-[#a17a58] transition-all shadow-[0_15px_40px_rgba(26,20,16,0.2)] disabled:opacity-30 disabled:cursor-not-allowed group"
+                                    >
+                                        Authorize Designer Engine <span className="group-hover:translate-x-2 transition-transform inline-block ml-2">→</span>
+                                    </button>
+
+                                    <p className="text-[8px] uppercase tracking-widest text-gray-400">
+                                        Secure · Private · 1:1 Bespoke Service
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Step 4: Concept Image */}
                         {step === 4 && (
-                            <div className="animate-in zoom-in-95 duration-1000 text-center">
-                                <h2 className="text-2xl font-serif italic mb-2">{selectedLook?.name}</h2>
-                                <p className="text-[10px] uppercase tracking-[4px] text-[#a17a58] mb-12">Generating Your Bespoke Concept...</p>
+                            <div className="animate-in fill-mode-both zoom-in-95 duration-1000 text-center">
+                                <h2 className="text-2xl font-serif italic mb-2 text-[#1a1410]">{selectedLook?.name}</h2>
+                                <p className="text-[10px] uppercase tracking-[4px] text-[#a17a58] mb-12 font-bold animate-pulse">Processing High-Resolution Render...</p>
 
-                                <div className="max-w-md mx-auto aspect-[3/4] bg-[#fafafa] border border-gray-100 rounded-sm relative overflow-hidden shadow-2xl mb-12 group">
+                                <div className="max-w-md mx-auto aspect-[3/4] bg-[#1a1410] border-4 border-white rounded-sm relative overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.3)] mb-12 group">
                                     {imgLoading ? (
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center space-y-6">
-                                            <div className="w-12 h-12 border-t-2 border-[#a17a58] rounded-full animate-spin" />
-                                            <div>
-                                                <p className="text-[10px] uppercase tracking-3px text-[#a17a58] animate-pulse">Our artisans are weaving your vision...</p>
-                                                <p className="text-[8px] text-gray-400 mt-2 font-light italic">"Sketching your {selectedLook?.name}..."</p>
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center space-y-8 bg-[#1a1410]/95 backdrop-blur-sm">
+                                            <div className="relative w-20 h-20">
+                                                <div className="absolute inset-0 border-2 border-[#a17a58]/20 rounded-full" />
+                                                <div className="absolute inset-0 border-t-2 border-[#a17a58] rounded-full animate-spin" />
+                                            </div>
+                                            <div className="px-10">
+                                                <p className="text-[12px] uppercase tracking-[4px] text-white font-medium mb-3">Artisans are weaving your Vision</p>
+                                                <p className="text-[9px] text-[#a17a58] font-bold tracking-widest uppercase italic opacity-80">Finalizing {selectedLook?.name} Silhouettes...</p>
+                                            </div>
+                                            <div className="w-48 h-[1px] bg-white/10 relative overflow-hidden">
+                                                <div className="absolute inset-0 bg-[#a17a58] animate-[shimmer_2s_infinite] w-full" />
                                             </div>
                                         </div>
                                     ) : (
                                         <img src={conceptImg || ''} className="w-full h-full object-cover transition-all duration-1000 animate-in fade-in zoom-in-110" />
                                     )}
-                                    <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur px-3 py-1 text-[8px] uppercase tracking-widest text-[#a17a58] border border-gray-100 shadow-sm">AI Render · Concept Only</div>
+                                    <div className="absolute bottom-4 right-4 bg-white/95 px-4 py-2 text-[8px] font-bold uppercase tracking-widest text-[#1a1410] border border-gray-100 shadow-xl">Asuka Couture · Studio Render</div>
                                 </div>
 
                                 <div className="flex flex-col items-center gap-6">

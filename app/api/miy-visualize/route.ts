@@ -9,8 +9,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Bytez API key not configured' }, { status: 500 });
         }
 
-        // Using FLUX.1-dev for highest quality, as requested for luxury fashion
-        const response = await fetch('https://api.bytez.com/models/v2/black-forest-labs/FLUX.1-dev', {
+        // Using Stable Diffusion XL (Compatible with Bytez Free Tier)
+        const response = await fetch('https://api.bytez.com/models/v2/stabilityai/stable-diffusion-xl-base-1.0', {
             method: 'POST',
             headers: {
                 'Authorization': apiKey,
