@@ -40,7 +40,7 @@ export default function MakeItYourself() {
     const [msg, setMsg] = useState('')
     const [loading, setLoading] = useState(false)
     const [looks, setLooks] = useState<Look[]>([])
-    const [chatLog, setChatLog] = useState<{ role: string, content: string }[]>([{ role: 'assistant', content: "Namaste! I'm your Asuka Atelier assistant. I can help you design a one-of-a-kind custom outfit. What vibe do you have in mind?" }])
+    const [chatLog, setChatLog] = useState<{ role: string, content: string }[]>([])
     const [imagePrompt, setImagePrompt] = useState<string | null>(null)
 
     // Step 4: Concept Img
@@ -48,15 +48,22 @@ export default function MakeItYourself() {
     const [conceptImg, setConceptImg] = useState<string | null>(null)
     const [imgLoading, setImgLoading] = useState(false)
 
+    const greetingRef = useRef(false)
+
     // Update greeting with city once user moves to chat step
     useEffect(() => {
-        if (step === 3 && city && chatLog.length === 1) {
+        if (step === 3 && chatLog.length === 0 && !greetingRef.current) {
+            greetingRef.current = true
+            const loc = city ? ` in ${city}` : ''
             setChatLog([{
                 role: 'assistant',
-                content: `Namaste! I'm your Asuka Atelier assistant. I see you're joining us from ${city}. I can help you design a one-of-a-kind custom outfit for your next big event. What vibe do you have in mind?`
+                content: `Namaste! I've captured your preferences. A ${occasion}${loc} calls for something truly special. I'm here to help you design a one-of-a-kind custom outfit. What specific mood or celebrity inspiration do you have in mind?`
             }])
+        } else if (step !== 3) {
+            // Reset ref if user goes back to earlier steps, so greeting returns if they re-enter
+            greetingRef.current = false
         }
-    }, [step, city, chatLog])
+    }, [step, chatLog.length, city, occasion])
 
     // Step 5: Customize & Handover
     const [lapel, setLapel] = useState('Peak Satin Lapel')
@@ -67,8 +74,13 @@ export default function MakeItYourself() {
 
     const chatContainerRef = useRef<HTMLDivElement>(null)
 
+    // Scroll page to top ONLY when step changes
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' })
+    }, [step])
+
+    // Scroll chat log to bottom when messages are added or loading state changes
+    useEffect(() => {
         if (step === 3 && chatContainerRef.current) {
             chatContainerRef.current.scrollTo({
                 top: chatContainerRef.current.scrollHeight,
@@ -153,13 +165,13 @@ Please connect me with a tailor to finalize.`
         <div className="min-h-screen bg-[#fffdfd] transition-all duration-700">
             <Header />
 
-            <main className="pt-40 pb-20 px-4">
+            <main className="pt-24 md:pt-40 pb-12 px-4">
                 <div className="max-w-4xl mx-auto">
 
                     {/* Progress Header */}
-                    <div className="text-center mb-16">
-                        <span className="text-[10px] uppercase tracking-[4px] text-[#a17a58] mb-4 block">Asuka Atelier</span>
-                        <h1 className="text-3xl md:text-4xl font-serif text-[#1a1410] mb-8 font-light italic">Make It Yourself</h1>
+                    <div className="text-center mb-8 md:mb-16">
+                        <span className="text-[10px] uppercase tracking-[4px] text-[#a17a58] mb-2 md:mb-4 block">Asuka Atelier</span>
+                        <h1 className="text-2xl md:text-4xl font-serif text-[#1a1410] mb-6 md:mb-8 font-light italic">Make It Yourself</h1>
                         <div className="flex justify-center items-center gap-2 md:gap-4">
                             {[1, 2, 3, 4, 5].map(s => (
                                 <div key={s} className="flex items-center gap-2 md:gap-4">
@@ -172,7 +184,7 @@ Please connect me with a tailor to finalize.`
                         </div>
                     </div>
 
-                    <div className="bg-white p-8 md:p-12 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.05)] border border-gray-100 rounded-sm min-h-[500px] relative overflow-hidden">
+                    <div className="bg-white p-8 md:p-12 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.05)] border border-gray-100 rounded-sm min-h-[500px] relative">
 
                         {/* Step 1: Occasion & Vibe */}
                         {step === 1 && (
@@ -300,19 +312,13 @@ Please connect me with a tailor to finalize.`
 
                         {/* Step 3: Chat */}
                         {step === 3 && (
-                            <div className="animate-in fade-in scale-in-95 duration-700 h-[70vh] min-h-[500px] max-h-[800px] flex flex-col">
-                                <div className="text-center mb-6 shrink-0">
-                                    <h2 className="text-xl font-serif italic mb-2 text-[#1a1410]">Conversational Curator</h2>
+                            <div className="animate-in fade-in scale-in-95 duration-700 h-[500px] md:h-[70vh] max-h-[800px] flex flex-col">
+                                <div className="text-center mb-4 shrink-0">
+                                    <h2 className="text-xl font-serif italic mb-1 text-[#1a1410]">Conversational Curator</h2>
                                     <p className="text-[10px] uppercase tracking-widest text-[#a17a58]">Designing for your {occasion}...</p>
                                 </div>
 
-                                <div ref={chatContainerRef} className="flex-1 min-h-[400px] border border-gray-100 bg-[#fafafa]/50 rounded-lg p-6 overflow-y-auto mb-6 flex flex-col gap-4">
-                                    <div className="bg-white p-4 rounded-lg border border-gray-100 max-w-[85%] self-start shadow-sm transition-all duration-500">
-                                        <p className="text-sm font-light leading-relaxed text-gray-700">
-                                            Namaste! I have your preferences. A {occasion} in {city || 'your city'} calls for something truly special. What specific mood or celebrity inspiration do you have in mind?
-                                        </p>
-                                    </div>
-
+                                <div ref={chatContainerRef} className="flex-1 min-h-0 border border-gray-100 bg-[#fafafa]/50 rounded-lg p-4 md:p-6 overflow-y-auto mb-4 flex flex-col gap-4">
                                     {chatLog.map((m, i) => (
                                         <div key={i} className={`p-4 rounded-lg text-sm font-light leading-relaxed max-w-[85%] shadow-sm transition-all duration-500 ${m.role === 'user' ? 'bg-[#1a1410] text-white self-end' : 'bg-white border border-gray-100 text-gray-700 self-start'}`}>
                                             {m.content}

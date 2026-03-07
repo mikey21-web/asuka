@@ -156,9 +156,12 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
     }
   }, [msgs, storageKey])
 
+  const greetingRef = useRef(false)
+
   // Initialize first assistant message
   useEffect(() => {
-    if (msgs.length === 0) {
+    if (msgs.length === 0 && !greetingRef.current) {
+      greetingRef.current = true
       const g = persona === 'style'
         ? "Namaste! I'm Ayaan, your personal stylist. What occasion can I help you with today?"
         : "Namaste! I'm your Asuka Atelier assistant. I can help you design a one-of-a-kind custom outfit. What vibe do you have in mind?"
@@ -369,7 +372,10 @@ export default function AIWidget({ isFloating = false }: { isFloating?: boolean 
     return () => window.removeEventListener('openAsukaPanel', handler)
   }, [isFloating])
 
-  if (pathname === '/make-it-yourself') {
+  const hidePaths = ['/make-it-yourself', '/ai-stylist', '/stylist']
+  const shouldHide = pathname && hidePaths.some(p => pathname.startsWith(p))
+
+  if (shouldHide) {
     return null;
   }
 
