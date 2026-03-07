@@ -5,8 +5,8 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(req: NextRequest) {
     try {
         const lead = await req.json();
-        // Pointing to your n8n leads webhook (or environment variable)
-        const n8nWebhookUrl = process.env.N8N_LEADS_URL || 'https://n8n.diyaaaa.in/webhook-test/asuka-miy-leads';
+        // Pointing to your n8n leads webhook (Production URL)
+        const n8nWebhookUrl = process.env.N8N_LEADS_URL || 'https://n8n.diyaaaa.in/webhook/asuka-miy-leads';
 
         // Log to the server console (visible in Vercel logs)
         console.log('--- NEW BESPOKE LEAD CAPTURED ---');
@@ -17,12 +17,14 @@ export async function POST(req: NextRequest) {
         console.log('--------------------------------');
 
         // Forward to n8n for Google Sheets push
+        // Note: prepending ' to contact to prevent Google Sheets formula parse errors
         try {
             await fetch(n8nWebhookUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...lead,
+                    contact: `'${lead.contact}`,
                     source: 'MIY Atelier Web',
                     archivedAt: new Date().toISOString()
                 })
