@@ -122,33 +122,49 @@ export default function MakeItYourself() {
         setImgLoading(true)
         setConceptImg(null)
 
-        const seed = Math.floor(Math.random() * 1000000)
-        // Shorter, more optimized prompt for faster API response
-        const prompt = imagePrompt || `luxury Indian ${look.name} menswear, ${look.direction}, cinematic fashion photography, studio background`
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1344&nologo=true&seed=${seed}`
+        try {
+            // Simplified prompt optimized for Bytez/Flux
+            const prompt = imagePrompt || `Luxury Indian ${look.name} menswear, ${look.direction}, exquisite textures`
 
-        const img = new Image()
+            const response = await fetch('/api/miy-visualize', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt })
+            });
 
-        // Set a 30-second logic timeout to show the retry button if the browser/network hangs
-        const timeout = setTimeout(() => {
-            if (imgLoading && !conceptImg) {
-                console.warn("Generation timeout reached")
+            if (!response.ok) throw new Error('API Error');
+
+            const data = await response.json();
+
+            if (data.imageUrl) {
+                // Preload the base64 image
+                const img = new Image()
+                img.src = data.imageUrl
+                img.onload = () => {
+                    setConceptImg(data.imageUrl)
+                    setImgLoading(false)
+                }
+            } else {
+                throw new Error('No image returned');
+            }
+        } catch (error) {
+            console.error("Bytez Generation failed, falling back to Pollinations:", error)
+
+            // Fallback to Pollinations if Bytez fails (redundancy for the live demo)
+            const seed = Math.floor(Math.random() * 1000000)
+            const fallbackPrompt = imagePrompt || `luxury Indian ${look.name} menswear, ${look.direction}`
+            const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(fallbackPrompt)}?width=1024&height=1344&nologo=true&seed=${seed}`
+
+            const img = new Image()
+            img.src = fallbackUrl
+            img.onload = () => {
+                setConceptImg(fallbackUrl)
                 setImgLoading(false)
             }
-        }, 30000)
-
-        img.src = url
-        img.onload = () => {
-            clearTimeout(timeout)
-            setConceptImg(url)
-            setImgLoading(false)
-        }
-        img.onerror = () => {
-            clearTimeout(timeout)
-            console.error("Failed to load concept image")
-            setImgLoading(false)
-            // Fallback to a high-quality static brand image to keep the flow moving for the client
-            setConceptImg("https://asukacouture.com/cdn/shop/files/Untitled_design_70x.png")
+            img.onerror = () => {
+                setImgLoading(false)
+                setConceptImg("https://asukacouture.com/cdn/shop/files/Untitled_design_70x.png")
+            }
         }
     }
 
