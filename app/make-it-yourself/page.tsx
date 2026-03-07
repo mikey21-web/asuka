@@ -40,13 +40,23 @@ export default function MakeItYourself() {
     const [msg, setMsg] = useState('')
     const [loading, setLoading] = useState(false)
     const [looks, setLooks] = useState<Look[]>([])
-    const [chatLog, setChatLog] = useState<{ role: string, content: string }[]>([])
+    const [chatLog, setChatLog] = useState<{ role: string, content: string }[]>([{ role: 'assistant', content: "Namaste! I'm your Asuka Atelier assistant. I can help you design a one-of-a-kind custom outfit. What vibe do you have in mind?" }])
     const [imagePrompt, setImagePrompt] = useState<string | null>(null)
 
     // Step 4: Concept Img
     const [selectedLook, setSelectedLook] = useState<Look | null>(null)
     const [conceptImg, setConceptImg] = useState<string | null>(null)
     const [imgLoading, setImgLoading] = useState(false)
+
+    // Update greeting with city once user moves to chat step
+    useEffect(() => {
+        if (step === 3 && city && chatLog.length === 1) {
+            setChatLog([{
+                role: 'assistant',
+                content: `Namaste! I'm your Asuka Atelier assistant. I see you're joining us from ${city}. I can help you design a one-of-a-kind custom outfit for your next big event. What vibe do you have in mind?`
+            }])
+        }
+    }, [step, city, chatLog])
 
     // Step 5: Customize & Handover
     const [lapel, setLapel] = useState('Peak Satin Lapel')
@@ -299,7 +309,7 @@ Please connect me with a tailor to finalize.`
                                 <div ref={chatContainerRef} className="flex-1 min-h-[400px] border border-gray-100 bg-[#fafafa]/50 rounded-lg p-6 overflow-y-auto mb-6 flex flex-col gap-4">
                                     <div className="bg-white p-4 rounded-lg border border-gray-100 max-w-[85%] self-start shadow-sm transition-all duration-500">
                                         <p className="text-sm font-light leading-relaxed text-gray-700">
-                                            Namaste! I have your preferences. A {occasion} in Jaipur calls for something truly special. What specific mood or celebrity inspiration do you have in mind?
+                                            Namaste! I have your preferences. A {occasion} in {city || 'your city'} calls for something truly special. What specific mood or celebrity inspiration do you have in mind?
                                         </p>
                                     </div>
 
@@ -367,8 +377,8 @@ Please connect me with a tailor to finalize.`
                                         <div className="absolute inset-0 flex flex-col items-center justify-center space-y-6">
                                             <div className="w-12 h-12 border-t-2 border-[#a17a58] rounded-full animate-spin" />
                                             <div>
-                                                <p className="text-[10px] uppercase tracking-[3px] text-[#a17a58] animate-pulse">Weaving details...</p>
-                                                <p className="text-[8px] text-gray-400 mt-2 font-light italic">"{imagePrompt?.slice(0, 40)}..."</p>
+                                                <p className="text-[10px] uppercase tracking-3px text-[#a17a58] animate-pulse">Our artisans are weaving your vision...</p>
+                                                <p className="text-[8px] text-gray-400 mt-2 font-light italic">"Sketching your {selectedLook?.name}..."</p>
                                             </div>
                                         </div>
                                     ) : (
@@ -385,6 +395,14 @@ Please connect me with a tailor to finalize.`
                                         </button>
                                     )}
                                 </div>
+                                {conceptImg === null && !imgLoading && (
+                                    <div className="mt-8 p-6 border border-[#a17a58]/20 bg-[#a17a58]/5 rounded-sm max-w-lg mx-auto">
+                                        <p className="text-sm font-light text-[#1a1410] mb-4">The visualization atelier is currently backlogged due to high demand.</p>
+                                        <button onClick={() => selectedLook && generateConcept(selectedLook)} className="text-[10px] uppercase tracking-[2px] bg-[#1a1410] text-white px-6 py-2 hover:bg-[#a17a58] transition-all">
+                                            Retry Visualization
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
 
