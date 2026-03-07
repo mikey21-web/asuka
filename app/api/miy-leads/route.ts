@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
     try {
         const lead = await req.json();
         // Pointing to your n8n leads webhook (or environment variable)
-        const n8nWebhookUrl = process.env.N8N_LEADS_URL || 'https://n8n.diyaaaa.in/webhook/asuka-miy-leads';
+        const n8nWebhookUrl = process.env.N8N_LEADS_URL || 'https://n8n.diyaaaa.in/webhook-test/asuka-miy-leads';
 
         // Log to the server console (visible in Vercel logs)
         console.log('--- NEW BESPOKE LEAD CAPTURED ---');
