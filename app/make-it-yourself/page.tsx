@@ -120,24 +120,35 @@ export default function MakeItYourself() {
         setSelectedLook(look)
         setStep(4)
         setImgLoading(true)
+        setConceptImg(null)
 
-        // Generate via Pollinations/Flux with better, more reliable prompts
         const seed = Math.floor(Math.random() * 1000000)
-        const prompt = imagePrompt || `hyper-realistic luxury Indian ${look.name} couture outfit for men, ${look.direction}, ${look.fabric_notes}, editorial fashion studio photography, clean neutral background, 8k resolution, cinematic lighting`
+        // Shorter, more optimized prompt for faster API response
+        const prompt = imagePrompt || `luxury Indian ${look.name} menswear, ${look.direction}, cinematic fashion photography, studio background`
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1344&nologo=true&seed=${seed}`
 
-        // Preload image
         const img = new Image()
+
+        // Set a 30-second logic timeout to show the retry button if the browser/network hangs
+        const timeout = setTimeout(() => {
+            if (imgLoading && !conceptImg) {
+                console.warn("Generation timeout reached")
+                setImgLoading(false)
+            }
+        }, 30000)
+
         img.src = url
         img.onload = () => {
+            clearTimeout(timeout)
             setConceptImg(url)
             setImgLoading(false)
         }
         img.onerror = () => {
+            clearTimeout(timeout)
             console.error("Failed to load concept image")
             setImgLoading(false)
-            // Instead of blocking, show a fallback or notify the user gracefully
-            setConceptImg(`https://image.pollinations.ai/prompt/${encodeURIComponent('luxury indian sherwani sketch artistic')}`)
+            // Fallback to a high-quality static brand image to keep the flow moving for the client
+            setConceptImg("https://asukacouture.com/cdn/shop/files/Untitled_design_70x.png")
         }
     }
 
