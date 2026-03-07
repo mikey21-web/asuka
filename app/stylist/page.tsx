@@ -233,7 +233,7 @@ export default function StylistPage() {
   const [monogram, setMonogram] = useState('')
   const [monogramPos, setMonogramPos] = useState('Inner Chest')
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs, chatLoading])
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }) }, [msgs])
 
   // Build context summary for AI
   const buildContext = () => {
@@ -773,13 +773,13 @@ export default function StylistPage() {
               border: `1px solid ${T.border}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               position: 'relative', overflow: 'hidden', background: T.bgAlt
             }}>
-              <img 
+              <img
                 src={`https://image.pollinations.ai/prompt/${encodeURIComponent(`luxury Indian bespoke menswear, ${designSummary || 'couture outfit'}, editorial photography, 8k, dramatic lighting, white studio background`)}?width=600&height=800&nologo=true&seed=${(designSummary || '').length}`}
                 alt="AI Design Preview"
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '12px', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', borderTop: `1px solid ${T.border}` }}>
-                 <div style={{ fontSize: '9px', fontWeight: 500, letterSpacing: '0.1em', color: T.white, textTransform: 'uppercase' }}>AI Concierge Preview</div>
+                <div style={{ fontSize: '9px', fontWeight: 500, letterSpacing: '0.1em', color: T.white, textTransform: 'uppercase' }}>AI Concierge Preview</div>
               </div>
             </div>
 

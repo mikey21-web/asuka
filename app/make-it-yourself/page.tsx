@@ -82,11 +82,11 @@ export default function MakeItYourself() {
     const chatContainerRef = useRef<HTMLDivElement>(null)
 
     // Scroll page to top ONLY when step changes
-    useEffect(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-    }, [step])
+    // useEffect(() => {
+    //     window.scrollTo({ top: 0, behavior: 'smooth' })
+    // }, [step])
 
-    // Scroll chat log to bottom when messages are added or loading state changes
+    // Scroll chat log to bottom ONLY when new messages arrive
     useEffect(() => {
         if (step === 3 && chatContainerRef.current) {
             chatContainerRef.current.scrollTo({
@@ -94,7 +94,7 @@ export default function MakeItYourself() {
                 behavior: 'smooth'
             })
         }
-    }, [chatLog, loading, step])
+    }, [chatLog]) // Removed 'loading' and 'step' to prevent excessive scrolling
 
     const handleChat = async () => {
         if (!msg.trim()) return
