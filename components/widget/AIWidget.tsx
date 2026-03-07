@@ -26,7 +26,7 @@ function extractColour(txt: string): string {
 }
 
 /* ── BOLD + PRODUCT LINK RENDERER ── */
-function Bold({ text }: { text: string }) {
+function Bold({ text, contextProducts }: { text: string; contextProducts?: any[] }) {
   // Match **text** and **[text]** patterns
   const parts = text.split(/(\*\*\[?.*?\]?\*\*)/g)
   return (
@@ -34,14 +34,25 @@ function Bold({ text }: { text: string }) {
       {parts.map((p, i) => {
         if (p.startsWith('**') && p.endsWith('**')) {
           const inner = p.slice(2, -2).replace(/^\[|\]$/g, '') // strip ** and optional []
-          // Try to find a matching product
-          const product = ASUKA_PRODUCTS.find(prod =>
-            prod.name.toLowerCase().includes(inner.toLowerCase()) ||
-            inner.toLowerCase().includes(prod.name.toLowerCase())
-          )
+
+          // Try to find a matching product in contextProducts first (from API)
+          let product = (contextProducts || []).find(prod => {
+            const title = (prod.title || prod.name || '').toLowerCase()
+            return title.includes(inner.toLowerCase()) || inner.toLowerCase().includes(title)
+          })
+
+          // Fallback to static ASUKA_PRODUCTS
+          if (!product) {
+            product = ASUKA_PRODUCTS.find(prod =>
+              prod.name.toLowerCase().includes(inner.toLowerCase()) ||
+              inner.toLowerCase().includes(prod.name.toLowerCase())
+            )
+          }
+
           if (product) {
+            const handle = product.handle || (product.url ? product.url.split('/products/')[1] : '')
             return (
-              <a key={i} href={`/products/${product.url.split('/products/')[1] || ''}`}
+              <a key={i} href={`/products/${handle}`}
                 style={{ color: '#c9a84c', textDecoration: 'underline', fontWeight: 400, cursor: 'pointer' }}
                 target="_blank" rel="noopener noreferrer">
                 {inner}
@@ -100,7 +111,7 @@ function ProductCard({ p: productObj, name }: { p?: any; name?: string }) {
   // ASUKA_PRODUCTS returns {name, url, price, img}
   const title = p.title || p.name
   const price = p.price
-  const imgUrl = p.image_url || p.img || ''
+  const imgUrl = p.image_url || p.first_image || p.img || ''
   const prodUrl = p.handle
     ? `https://asukacouture.com/products/${p.handle}`
     : (p.url && p.url.startsWith('http') ? p.url : `https://asukacouture.com${p.url || ''}`)
@@ -264,7 +275,7 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', letterSpacing: '2px', textTransform: 'uppercase', color: m.role === 'user' ? '#a17a58' : '#999', marginBottom: '4px' }}>{m.role === 'assistant' ? (persona === 'style' ? 'Ayaan · Asuka' : 'Asuka Atelier') : 'You'}</span>
               <div style={{ maxWidth: '85%', padding: '10px 14px', fontSize: '12px', lineHeight: 1.7, color: '#1a1410', background: m.role === 'user' ? '#f5ede3' : '#faf7f2', border: m.role === 'user' ? '1px solid #d4c4b0' : '1px solid #e8e0d6', borderRadius: '6px' }}>
                 {cleanContent.split('\n').map((line, j) => (
-                  <span key={j}><Bold text={line} />{j < cleanContent.split('\n').length - 1 && <br />}</span>
+                  <span key={j}><Bold text={line} contextProducts={m.products} />{j < cleanContent.split('\n').length - 1 && <br />}</span>
                 ))}
 
                 {/* Render Product Cards if any */}

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { Groq } from 'groq-sdk'
-import { getAllProducts } from '@/lib/catalog'
+import { getAllProducts, type CatalogProduct } from '@/lib/catalog'
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY
@@ -32,46 +32,128 @@ export async function POST(req: Request) {
       CHAT_HISTORY[sid] = []
     }
 
-    // Get a tiny subset of the catalog for context (to avoid token limits)
+    // Get the full catalog
     const allProducts = getAllProducts()
-    const productContext = allProducts.slice(0, 70).map(p => {
-      const desc = p.description.replace(/<[^>]*>?/gm, '').slice(0, 60)
+
+    // NEW: Relevance-based product retrieval
+    const searchContext = [...(CHAT_HISTORY[sid] || []), { role: 'user', content: message }]
+      .map(m => {
+        if (m.role === 'assistant') {
+          try {
+            const parsed = JSON.parse(m.content)
+            return parsed.reply || m.content
+          } catch {
+            return m.content
+          }
+        }
+        return m.content
+      })
+      .join(' ').toLowerCase()
+
+    // Detect focus categories in current message vs history
+    const currentMsgLower = message.toLowerCase()
+
+    // Define Category Groups
+    const CATEGORY_GROUPS = {
+      ETHNIC: ['sherwani', 'kurta', 'bundi', 'angrakha', 'bandhgala', 'indowestern', 'stole', 'jutti'],
+      WESTERN: ['tuxedo', 'suit', 'jacket', 'shirt', 'blazer', 'pant', 'tie']
+    }
+
+    // Logic to determine user's current intent
+    const hasTuxedo = currentMsgLower.includes('tuxedo')
+    const hasSuit = currentMsgLower.includes('suit') && !currentMsgLower.includes('indowestern')
+    const hasWesternIntent = hasTuxedo || hasSuit || ['blazer', 'shirt'].some(k => currentMsgLower.includes(k))
+    const hasEthnicIntent = CATEGORY_GROUPS.ETHNIC.some(k => currentMsgLower.includes(k))
+
+    let productsForContext = allProducts
+      .map((p: CatalogProduct) => {
+        let score = 0
+        const title = p.title.toLowerCase()
+        const handle = p.handle.toLowerCase()
+        const desc = (p.description || '').toLowerCase()
+        const pText = `${title} ${handle} ${desc}`
+
+        // 1. HARD FILTER: Category Enforcement
+        if (hasTuxedo && !title.includes('tuxedo')) score -= 200
+        if (hasWesternIntent && (title.includes('sherwani') || title.includes('kurta') || title.includes('bundi'))) score -= 500
+        if (hasEthnicIntent && (title.includes('tuxedo') || (title.includes('suit') && !title.includes('indowestern')))) score -= 500
+
+        // 2. PRIMARY KEYWORD BOOST (Current Message)
+        const activeCategories = [...CATEGORY_GROUPS.ETHNIC, ...CATEGORY_GROUPS.WESTERN]
+        activeCategories.forEach(cat => {
+          if (currentMsgLower.includes(cat)) {
+            if (title.includes(cat)) score += 100 // Massive boost for specific category
+            else if (desc.includes(cat)) score += 40
+          }
+        })
+
+        // 3. COLOR MATCH (Current Message)
+        const colors = ['blue', 'black', 'white', 'ivory', 'gold', 'red', 'pink', 'green', 'grey', 'maroon', 'beige', 'peach', 'ocean']
+        colors.forEach(col => {
+          if (currentMsgLower.includes(col)) {
+            if (title.includes(col)) score += 30
+            else if (desc.includes(col)) score += 10
+          }
+        })
+
+        // 4. OCCASION MATCH (Full Conversation History)
+        const occasions = ['wedding', 'sangeet', 'haldi', 'mehendi', 'cocktail', 'party', 'reception', 'formal', 'casual']
+        occasions.forEach(occ => {
+          if (searchContext.includes(occ)) {
+            if (title.includes(occ) || desc.includes(occ)) score += 20
+          }
+        })
+
+        // 5. WORD MATCH
+        const words = currentMsgLower.split(/\s+/).filter((w: string) => w.length > 3)
+        words.forEach((word: string) => {
+          if (title.includes(word)) score += 10
+        })
+
+        return { ...p, score }
+      })
+      .filter(p => p.score > 0)
+      .sort((a: any, b: any) => b.score - a.score)
+      .slice(0, 60)
+
+    // Fallback: If no strong matches, include some best-sellers/new-arrivals from top of list
+    if (productsForContext.length < 15) {
+      const topProducts = allProducts.slice(0, 40)
+      const existingHandles = new Set(productsForContext.map(p => p.handle))
+      topProducts.forEach(p => {
+        if (!existingHandles.has(p.handle) && productsForContext.length < 60) {
+          productsForContext.push({ ...p, score: 0 })
+        }
+      })
+    }
+
+    const productContext = productsForContext.map(p => {
+      const desc = p.description.replace(/<[^>]*>?/gm, '').slice(0, 70)
       return `${p.title}|${p.handle}|${p.price}|${desc}...`
     }).join('\n')
 
-    const systemPrompt = `You are **Ayaan**, the personal AI fashion stylist at Asuka Couture — one of India's most prestigious luxury menswear houses (est. 1991).
+    const systemPrompt = `You are **Ayaan**, the personal AI fashion stylist at Asuka Couture — India's prestigious luxury menswear house.
     
+    CRITICAL INSTRUCTION:
+    - CATEGORY INTEGRITY: If a user asks for Western wear (Tuxedo, Suit, Jacket), ONLY suggest from that category. NEVER suggest Sherwanis or Kurtas if a Tuxedo is requested.
+    - If you cannot find a direct match for the requested category in the CATALOG below, apologize and suggest the closest luxury Western alternative (e.g., a Black Suit if no Tuxedo).
+    - DO NOT mix Indian Ethnic wear into a Western request unless explicitly asked for "Indowestern".
+
     BRAND KNOWLEDGE:
-    - Established: 1991 (Heritage brand).
-    - Craftsmanship: Each piece is handcrafted over 80+ hours using heritage techniques.
-    - Physical flagship stores: Mumbai (Santacruz West), Hyderabad (Banjara Hills), Ahmedabad (Ellisbridge).
-    - KEY MARKET - DELHI: We have a very large clientele in **Delhi**. While we don't have a physical store there yet, we offer **Zoom measurement sessions** and ship to Delhi daily with many clients in zones like Vasant Vihar, Shanti Niketan, and GK.
-    - Shipping: Global shipping. We ship to Delhi, Jaipur, Bangalore, and worldwide.
-    - Bespoke: We offer a "Make It Yourself" (MIY) atelier for custom designs.
+    - Heritage brand since 1991. Physical stores: Mumbai, Hyderabad, Ahmedabad.
+    - We ship to Delhi, Bangalore, Jaipur, and worldwide. Suggest Zoom fittings.
 
-    PERSONALITY & TONE:
-    - Warm, witty, and expert. Like a trusted friend.
-    - Keep responses SHORT: 2-3 sentences.
-    - Use emojis sparingly.
-
-    PRODUCT RECOMMENDATIONS:
-    - ONLY recommend products from the catalog.
-    - Explain WHY a piece fits (color, texture, occasion).
-    - For customizations or final pricing/discounts, recommend chatting with our team on **WhatsApp (+91 9063356542)**.
-    - If user is in Delhi, Jaipur or Bangalore, mention virtual fittings and daily shipping.
-
-    CATALOG (Title|handle|price|description):
-    ${productContext}
+    PERSONALITY:
+    - Luxury connoisseur. Short, expert responses (max 3 sentences).
 
     RESPONSE FORMAT (JSON):
     {
-      "reply": "Your message",
+      "reply": "Expert advice based on the user's specific request",
       "products_mentioned": [{"title": "...", "handle": "...", "price": ...}]
     }
 
-    *** CRITICAL GUARDRAILS ***
-    Rule 1: If gibberish => "Namaste! I'm here to help you find the perfect luxury outfit. What occasion are you shopping for today?"
-    Rule 2: If unrelated to fashion => "Ayaan specializes in luxury menswear and bespoke tailoring at Asuka Couture. How can I dress you today?"`
+    CATALOG (Title|handle|price|description):
+    ${productContext}`
 
     const messages = [
       { role: 'system', content: systemPrompt },
@@ -110,7 +192,7 @@ export async function POST(req: Request) {
           title: fullProd.title,
           handle: fullProd.handle,
           price: fullProd.price,
-          image_url: fullProd.first_image !== 'NO IMAGE' ? fullProd.first_image : null
+          first_image: fullProd.first_image !== 'NO IMAGE' ? fullProd.first_image : null
         }
       }
       return p
