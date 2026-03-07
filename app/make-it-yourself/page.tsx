@@ -432,12 +432,21 @@ Please assign a Master Draper to finalize this commission.`
                                     <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur px-3 py-1 text-[8px] uppercase tracking-widest text-[#a17a58] border border-gray-100 shadow-sm">AI Render · Concept Only</div>
                                 </div>
 
-                                <div className="flex justify-center gap-4">
-                                    <button onClick={() => setStep(3)} className="text-[10px] uppercase tracking-[2px] text-gray-400 hover:text-[#a17a58] transition-all">← Different Direction</button>
-                                    {!imgLoading && (
-                                        <button onClick={() => setStep(5)} className="bg-[#1a1410] text-white px-12 py-4 text-xs uppercase tracking-[3px] hover:bg-[#a17a58] transition-all shadow-lg">
-                                            Finalize & Bespoke Details →
-                                        </button>
+                                <div className="flex flex-col items-center gap-6">
+                                    <div className="flex justify-center gap-4">
+                                        <button onClick={() => setStep(3)} className="text-[10px] uppercase tracking-[2px] text-gray-400 hover:text-[#a17a58] transition-all">← Different Direction</button>
+                                        {!imgLoading ? (
+                                            <button onClick={() => setStep(5)} className="bg-[#1a1410] text-white px-12 py-4 text-xs uppercase tracking-[3px] hover:bg-[#a17a58] transition-all shadow-lg">
+                                                Finalize & Bespoke Details →
+                                            </button>
+                                        ) : (
+                                            <button onClick={() => setStep(5)} className="bg-white border border-[#1a1410] text-[#1a1410] px-10 py-4 text-xs uppercase tracking-[3px] hover:bg-gray-50 transition-all">
+                                                Continue to Details →
+                                            </button>
+                                        )}
+                                    </div>
+                                    {imgLoading && (
+                                        <p className="text-[9px] text-gray-400 italic">Advanced rendering in progress. You may proceed while we weave...</p>
                                     )}
                                 </div>
                                 {conceptImg === null && !imgLoading && (
