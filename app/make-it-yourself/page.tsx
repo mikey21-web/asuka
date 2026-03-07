@@ -45,13 +45,15 @@ export default function MakeItYourself() {
 
     // Step 3.5: Lead Capture
     const [clientName, setClientName] = useState('')
-    const [clientContact, setClientContact] = useState('')
+    const [clientPhone, setClientPhone] = useState('') // Just the 10 digits
+    const clientContact = clientPhone.length === 10 ? `+91 ${clientPhone}` : ''
     const [pendingLook, setPendingLook] = useState<Look | null>(null)
 
     // Step 4: Concept Img
     const [selectedLook, setSelectedLook] = useState<Look | null>(null)
     const [conceptImg, setConceptImg] = useState<string | null>(null)
     const [imgLoading, setImgLoading] = useState(false)
+    const [isZoomed, setIsZoomed] = useState(false)
 
     const greetingRef = useRef(false)
 
@@ -131,6 +133,22 @@ export default function MakeItYourself() {
     }
 
     const startVisualization = async (look: Look) => {
+        // Save lead to our database first
+        try {
+            await fetch('/api/miy-leads', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: clientName,
+                    contact: clientContact,
+                    occasion: occasion,
+                    concept: look.name
+                })
+            });
+        } catch (e) {
+            console.warn("Lead archiving failed, continuing with visualization...");
+        }
+
         setSelectedLook(look)
         setStep(4)
         setImgLoading(true)
@@ -465,17 +483,28 @@ Please assign a Master Draper to finalize this commission.`
                                     </div>
                                     <div className="text-left">
                                         <label className="text-[9px] uppercase tracking-widest text-gray-400 font-bold mb-3 block">WhatsApp for Verification</label>
-                                        <input
-                                            className="w-full bg-[#fafafa] border-b border-gray-200 py-4 px-2 outline-none focus:border-[#a17a58] transition-all text-sm font-light"
-                                            value={clientContact}
-                                            onChange={e => setClientContact(e.target.value)}
-                                            placeholder="+91 99999 00000"
-                                        />
+                                        <div className="flex gap-4 items-center bg-[#fafafa] border-b border-gray-200 py-2">
+                                            <span className="text-sm text-[#a17a58] font-bold pl-2 tracking-widest">+91</span>
+                                            <input
+                                                type="tel"
+                                                maxLength={10}
+                                                className="w-full bg-transparent py-2 outline-none text-sm font-light tracking-[4px]"
+                                                value={clientPhone}
+                                                onChange={e => {
+                                                    const val = e.target.value.replace(/\D/g, '');
+                                                    if (val.length <= 10) setClientPhone(val);
+                                                }}
+                                                placeholder="XXXXXXXXXX"
+                                            />
+                                            <span className={`text-[10px] font-bold pr-2 ${clientPhone.length === 10 ? 'text-[#a17a58]' : 'text-gray-200'}`}>
+                                                {clientPhone.length}/10
+                                            </span>
+                                        </div>
                                     </div>
 
                                     <button
                                         onClick={() => pendingLook && startVisualization(pendingLook)}
-                                        disabled={!clientName || !clientContact}
+                                        disabled={!clientName || clientPhone.length !== 10}
                                         className="w-full bg-[#1a1410] text-white py-6 text-[11px] font-bold uppercase tracking-[4px] hover:bg-[#a17a58] transition-all shadow-[0_15px_40px_rgba(26,20,16,0.2)] disabled:opacity-30 disabled:cursor-not-allowed group"
                                     >
                                         Authorize Designer Engine <span className="group-hover:translate-x-2 transition-transform inline-block ml-2">→</span>
@@ -494,7 +523,10 @@ Please assign a Master Draper to finalize this commission.`
                                 <h2 className="text-2xl font-serif italic mb-2 text-[#1a1410]">{selectedLook?.name}</h2>
                                 <p className="text-[10px] uppercase tracking-[4px] text-[#a17a58] mb-12 font-bold animate-pulse">Processing High-Resolution Render...</p>
 
-                                <div className="max-w-md mx-auto aspect-[3/4] bg-[#1a1410] border-4 border-white rounded-sm relative overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.3)] mb-12 group">
+                                <div
+                                    onClick={() => !imgLoading && conceptImg && setIsZoomed(true)}
+                                    className={`max-w-md mx-auto aspect-[3/4] bg-[#1a1410] border-4 border-white rounded-sm relative overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.3)] mb-12 group ${!imgLoading && conceptImg ? 'cursor-zoom-in' : ''}`}
+                                >
                                     {imgLoading ? (
                                         <div className="absolute inset-0 flex flex-col items-center justify-center space-y-8 bg-[#1a1410]/95 backdrop-blur-sm">
                                             <div className="relative w-20 h-20">
@@ -510,10 +542,36 @@ Please assign a Master Draper to finalize this commission.`
                                             </div>
                                         </div>
                                     ) : (
-                                        <img src={conceptImg || ''} className="w-full h-full object-cover transition-all duration-1000 animate-in fade-in zoom-in-110" />
+                                        <>
+                                            <img src={conceptImg || ''} className="w-full h-full object-cover transition-all duration-1000 animate-in fade-in zoom-in-110" />
+                                            <div className="absolute inset-0 bg-[#1a1410]/0 group-hover:bg-[#1a1410]/20 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                                <p className="text-white text-[10px] uppercase tracking-[3px] font-bold bg-[#a17a58] px-6 py-3 shadow-2xl">Check Fabric Detail</p>
+                                            </div>
+                                        </>
                                     )}
                                     <div className="absolute bottom-4 right-4 bg-white/95 px-4 py-2 text-[8px] font-bold uppercase tracking-widest text-[#1a1410] border border-gray-100 shadow-xl">Asuka Couture · Studio Render</div>
                                 </div>
+
+                                {/* Zoom Modal */}
+                                {isZoomed && conceptImg && (
+                                    <div
+                                        className="fixed inset-0 z-[1000] bg-black/95 flex items-center justify-center p-4 md:p-12 animate-in fade-in duration-300"
+                                        onClick={() => setIsZoomed(false)}
+                                    >
+                                        <button className="absolute top-8 right-8 text-white/50 hover:text-white transition-all z-10">
+                                            <span className="text-[10px] uppercase tracking-[4px] font-bold mr-4">Close Atelier View</span>
+                                            <span className="text-2xl font-light">✕</span>
+                                        </button>
+
+                                        <div className="relative w-full h-full max-w-4xl flex items-center justify-center overflow-auto custom-scrollbar">
+                                            <img
+                                                src={conceptImg}
+                                                className="max-h-full w-auto shadow-2xl transition-all duration-700 animate-in zoom-in-95"
+                                                alt="High Res Concept"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="flex flex-col items-center gap-6">
                                     <div className="flex justify-center gap-4">
