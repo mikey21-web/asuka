@@ -121,9 +121,10 @@ export default function MakeItYourself() {
         setStep(4)
         setImgLoading(true)
 
-        // Generate via Pollinations/Flux for better conceptual quality
-        const prompt = imagePrompt || `luxury ${look.name} outfit, ${look.direction}, ${look.fabric_notes}, editorial fashion photography, studio background, 8k`
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1344&nologo=true&seed=${Date.now()}`
+        // Generate via Pollinations/Flux with better, more reliable prompts
+        const seed = Math.floor(Math.random() * 1000000)
+        const prompt = imagePrompt || `hyper-realistic luxury Indian ${look.name} couture outfit for men, ${look.direction}, ${look.fabric_notes}, editorial fashion studio photography, clean neutral background, 8k resolution, cinematic lighting`
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1344&nologo=true&seed=${seed}`
 
         // Preload image
         const img = new Image()
@@ -135,8 +136,8 @@ export default function MakeItYourself() {
         img.onerror = () => {
             console.error("Failed to load concept image")
             setImgLoading(false)
-            // Fallback to a placeholder or stay on chat
-            alert("The visualization atelier is currently backlogged. We've captured your design details!")
+            // Instead of blocking, show a fallback or notify the user gracefully
+            setConceptImg(`https://image.pollinations.ai/prompt/${encodeURIComponent('luxury indian sherwani sketch artistic')}`)
         }
     }
 
@@ -403,9 +404,9 @@ Please connect me with a tailor to finalize.`
                                 </div>
                                 {conceptImg === null && !imgLoading && (
                                     <div className="mt-8 p-6 border border-[#a17a58]/20 bg-[#a17a58]/5 rounded-sm max-w-lg mx-auto">
-                                        <p className="text-sm font-light text-[#1a1410] mb-4">The visualization atelier is currently backlogged due to high demand.</p>
+                                        <p className="text-sm font-light text-[#1a1410] mb-4">Our designers are hand-sketching your visualization. Please click below to refresh the atelier view.</p>
                                         <button onClick={() => selectedLook && generateConcept(selectedLook)} className="text-[10px] uppercase tracking-[2px] bg-[#1a1410] text-white px-6 py-2 hover:bg-[#a17a58] transition-all">
-                                            Retry Visualization
+                                            Refresh Designer Sketch
                                         </button>
                                     </div>
                                 )}

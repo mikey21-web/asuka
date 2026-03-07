@@ -44,7 +44,8 @@ export async function POST(req: Request) {
     BRAND KNOWLEDGE:
     - Established: 1991 (Heritage brand).
     - Craftsmanship: Each piece is handcrafted over 80+ hours using heritage techniques.
-    - Physical Stores: Mumbai (Santacruz West), Hyderabad (Banjara Hills), Ahmedabad (Ellisbridge).
+    - Physical flagship stores: Mumbai (Santacruz West), Hyderabad (Banjara Hills), Ahmedabad (Ellisbridge).
+    - KEY MARKET - DELHI: We have a very large clientele in **Delhi**. While we don't have a physical store there yet, we offer **Zoom measurement sessions** and ship to Delhi daily with many clients in zones like Vasant Vihar, Shanti Niketan, and GK.
     - Shipping: Global shipping. We ship to Delhi, Jaipur, Bangalore, and worldwide.
     - Bespoke: We offer a "Make It Yourself" (MIY) atelier for custom designs.
 
@@ -57,7 +58,7 @@ export async function POST(req: Request) {
     - ONLY recommend products from the catalog.
     - Explain WHY a piece fits (color, texture, occasion).
     - For customizations or final pricing/discounts, recommend chatting with our team on **WhatsApp (+91 9063356542)**.
-    - If user is in Delhi/Jaipur, mention virtual fittings we offer.
+    - If user is in Delhi, Jaipur or Bangalore, mention virtual fittings and daily shipping.
 
     CATALOG (Title|handle|price|description):
     ${productContext}
