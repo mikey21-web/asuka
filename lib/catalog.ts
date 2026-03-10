@@ -108,6 +108,13 @@ export function getCollectionProducts(collectionHandle: string): CatalogProduct[
 }
 
 /**
+ * Get featured products for a collection
+ */
+export function getFeaturedProducts(collectionHandle: string, limit: number = 4): CatalogProduct[] {
+    return getCollectionProducts(collectionHandle).slice(0, limit);
+}
+
+/**
  * Get celebrity products
  */
 export function getCelebrityProducts(): CatalogProduct[] {
