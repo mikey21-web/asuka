@@ -14,7 +14,7 @@ const CHAT_HISTORY: Record<string, any[]> = {}
 export async function POST(req: Request) {
   // CORS Headers
   const headers = {
-    'Access-Control-Allow-Origin': '*', // Replace with client's shopify domain in production
+    'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   }
@@ -32,129 +32,74 @@ export async function POST(req: Request) {
       CHAT_HISTORY[sid] = []
     }
 
-    // Get the full catalog
+    // Load full catalog
     const allProducts = getAllProducts()
 
-    // NEW: Relevance-based product retrieval
+    // ── STEP 1: DYNAMIC SEARCH ──
+    // Instead of simple keyword matching, we'll use a "Shortlist" approach.
     const searchContext = [...(CHAT_HISTORY[sid] || []), { role: 'user', content: message }]
-      .map(m => {
-        if (m.role === 'assistant') {
-          try {
-            const parsed = JSON.parse(m.content)
-            return parsed.reply || m.content
-          } catch {
-            return m.content
-          }
-        }
-        return m.content
-      })
-      .join(' ').toLowerCase()
+      .map(m => m.content).join(' ').toLowerCase()
 
-    // Detect focus categories in current message vs history
     const currentMsgLower = message.toLowerCase()
 
-    // Define Category Groups
-    const CATEGORY_GROUPS = {
+    // Categorization logic for filtering
+    const CATEGORIES = {
       ETHNIC: ['sherwani', 'kurta', 'bundi', 'angrakha', 'bandhgala', 'indowestern', 'stole', 'jutti'],
-      WESTERN: ['tuxedo', 'suit', 'jacket', 'shirt', 'blazer', 'pant', 'tie']
+      WESTERN: ['tuxedo', 'suit', 'jacket', 'shirt', 'blazer', 'pant', 'tie', 'safari', 'linen']
     }
 
-    // Logic to determine user's current intent
-    const hasTuxedo = currentMsgLower.includes('tuxedo')
-    const hasSuit = currentMsgLower.includes('suit') && !currentMsgLower.includes('indowestern')
-    const hasWesternIntent = hasTuxedo || hasSuit || ['blazer', 'shirt'].some(k => currentMsgLower.includes(k))
-    const hasEthnicIntent = CATEGORY_GROUPS.ETHNIC.some(k => currentMsgLower.includes(k))
+    // Narrow down the catalog to ~200 relevant products to save tokens while keeping "sync"
+    let shortlist = allProducts.map(p => {
+      let score = 0
+      const text = `${p.title} ${p.handle} ${p.description}`.toLowerCase()
 
-    let productsForContext = allProducts
-      .map((p: CatalogProduct) => {
-        let score = 0
-        const title = p.title.toLowerCase()
-        const handle = p.handle.toLowerCase()
-        const desc = (p.description || '').toLowerCase()
-        const pText = `${title} ${handle} ${desc}`
+      // Primary Keyword Match
+      if (currentMsgLower.includes('wedding')) score += text.includes('sherwani') || text.includes('wedding') ? 50 : 0
+      if (currentMsgLower.includes('tuxedo')) score += text.includes('tuxedo') ? 100 : 0
+      if (currentMsgLower.includes('haldi')) score += text.includes('yellow') || text.includes('kurta') ? 50 : 0
 
-        // 1. HARD FILTER: Category Enforcement
-        if (hasTuxedo && !title.includes('tuxedo')) score -= 200
-        if (hasWesternIntent && (title.includes('sherwani') || title.includes('kurta') || title.includes('bundi'))) score -= 500
-        if (hasEthnicIntent && (title.includes('tuxedo') || (title.includes('suit') && !title.includes('indowestern')))) score -= 500
+      // Color Match
+      const colors = ['blue', 'black', 'white', 'ivory', 'gold', 'red', 'pink', 'green', 'grey', 'beige']
+      colors.forEach(c => { if (currentMsgLower.includes(c) && text.includes(c)) score += 30 })
 
-        // 2. PRIMARY KEYWORD BOOST (Current Message)
-        const activeCategories = [...CATEGORY_GROUPS.ETHNIC, ...CATEGORY_GROUPS.WESTERN]
-        activeCategories.forEach(cat => {
-          if (currentMsgLower.includes(cat)) {
-            if (title.includes(cat)) score += 100 // Massive boost for specific category
-            else if (desc.includes(cat)) score += 40
-          }
-        })
+      // General relevance
+      const searchTerms = currentMsgLower.split(' ').filter((t: string) => t.length > 3)
+      searchTerms.forEach((t: string) => { if (text.includes(t)) score += 10 })
 
-        // 3. COLOR MATCH (Current Message)
-        const colors = ['blue', 'black', 'white', 'ivory', 'gold', 'red', 'pink', 'green', 'grey', 'maroon', 'beige', 'peach', 'ocean']
-        colors.forEach(col => {
-          if (currentMsgLower.includes(col)) {
-            if (title.includes(col)) score += 30
-            else if (desc.includes(col)) score += 10
-          }
-        })
+      return { ...p, score }
+    })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 150) // Give the AI 150 products to choose from
 
-        // 4. OCCASION MATCH (Full Conversation History)
-        const occasions = ['wedding', 'sangeet', 'haldi', 'mehendi', 'cocktail', 'party', 'reception', 'formal', 'casual']
-        occasions.forEach(occ => {
-          if (searchContext.includes(occ)) {
-            if (title.includes(occ) || desc.includes(occ)) score += 20
-          }
-        })
+    const catalogString = shortlist.map(p => `${p.title}|${p.handle}|${p.price}`).join('\n')
 
-        // 5. WORD MATCH
-        const words = currentMsgLower.split(/\s+/).filter((w: string) => w.length > 3)
-        words.forEach((word: string) => {
-          if (title.includes(word)) score += 10
-        })
-
-        return { ...p, score }
-      })
-      .filter(p => p.score > 0)
-      .sort((a: any, b: any) => b.score - a.score)
-      .slice(0, 60)
-
-    // Fallback: If no strong matches, include some best-sellers/new-arrivals from top of list
-    if (productsForContext.length < 15) {
-      const topProducts = allProducts.slice(0, 40)
-      const existingHandles = new Set(productsForContext.map(p => p.handle))
-      topProducts.forEach(p => {
-        if (!existingHandles.has(p.handle) && productsForContext.length < 60) {
-          productsForContext.push({ ...p, score: 0 })
-        }
-      })
-    }
-
-    const productContext = productsForContext.map(p => {
-      const desc = p.description.replace(/<[^>]*>?/gm, '').slice(0, 70)
-      return `${p.title}|${p.handle}|${p.price}|${desc}...`
-    }).join('\n')
-
-    const systemPrompt = `You are **Ayaan**, the personal AI fashion stylist at Asuka Couture — India's prestigious luxury menswear house.
+    // ── STEP 2: BRAINY SYSTEM PROMPT ──
+    const systemPrompt = `You are **Ayaan**, the distinguished Master Stylist at Asuka Couture. 
+    You are NOT just a search bot; you are a fashion consultant for India's elite.
     
-    CRITICAL INSTRUCTION:
-    - CATEGORY INTEGRITY: If a user asks for Western wear (Tuxedo, Suit, Jacket), ONLY suggest from that category. NEVER suggest Sherwanis or Kurtas if a Tuxedo is requested.
-    - If you cannot find a direct match for the requested category in the CATALOG below, apologize and suggest the closest luxury Western alternative (e.g., a Black Suit if no Tuxedo).
-    - DO NOT mix Indian Ethnic wear into a Western request unless explicitly asked for "Indowestern".
-
-    BRAND KNOWLEDGE:
-    - Heritage brand since 1991. Physical stores: Mumbai, Hyderabad, Ahmedabad.
-    - We ship to Delhi, Bangalore, Jaipur, and worldwide. Suggest Zoom fittings.
-
-    PERSONALITY:
-    - Luxury connoisseur. Short, expert responses (max 3 sentences).
-
-    RESPONSE FORMAT (JSON):
+    HERITAGE: Asuka Couture (est. 1991) is known for "Rituals of Fine Dressing". 
+    We blend ancient Indian craftsmanship with modern silhouettes.
+    
+    YOUR PERSONALITY:
+    - Sophisticated, polite, and authoritative. Use terms like "Sir", "Masterpiece", "Sartorial elegance".
+    - You understand human context: "Haldi" needs comfort and bright colors; "Cocktails" need sharp Tuxedos; "Sangeet" is for bold Indowesterns.
+    
+    YOUR BRAIN (Logic):
+    1. UNDERSTAND THE HUMAN: If the user says "I have a wedding", don't just dump products. Ask "Are you the Groom or a Guest?" or "Is it a day or night ceremony?".
+    2. SMART RECO: Choose only the TOP 3-5 products that perfectly fit the "vibe".
+    3. EXPLAIN THE WHY: For every product mentioned, explain WHY it fits (e.g., "The velvet trim on this Tuxedo adds the right amount of moonlight glow for a reception").
+    4. CATEGORY INTEGRITY: Western requests (Tuxedo/Suit) = Western products. Ethnic (Sherwani/Kurta) = Ethnic products.
+    
+    RESPONSE FORMAT (JSON ONLY):
     {
-      "reply": "Expert advice based on the user's specific request",
-      "products_mentioned": [{"title": "...", "handle": "...", "price": ...}]
+      "reply": "Your expert style advice (2-3 sentences). Address the user's vibe/concerns.",
+      "products_mentioned": [{"title": "...", "handle": "...", "reason": "Why this specific piece?"}]
     }
 
-    CATALOG (Title|handle|price|description):
-    ${productContext}`
+    CURRENT CATALOG SHORTLIST (Title|Handle|Price):
+    ${catalogString}`
 
+    // ── STEP 3: GENERATION ──
     const messages = [
       { role: 'system', content: systemPrompt },
       ...CHAT_HISTORY[sid],
@@ -164,8 +109,8 @@ export async function POST(req: Request) {
     const completion = await groq.chat.completions.create({
       messages: messages as any,
       model: 'llama-3.3-70b-versatile',
-      temperature: 0.7,
-      max_tokens: 600,
+      temperature: 0.6,
+      max_tokens: 800,
       response_format: { type: "json_object" }
     })
 
@@ -174,29 +119,25 @@ export async function POST(req: Request) {
     try {
       parsedResponse = JSON.parse(responseContent)
     } catch {
-      parsedResponse = { reply: "I apologize, sir. I had a momentary lapse. Could you repeat that?", products_mentioned: [] }
+      parsedResponse = { reply: "I apologize, Sir. My sartorial thoughts got slightly tangled. Could you rephrase your request?", products_mentioned: [] }
     }
 
-    // Save to history (keep last 6 turns to avoid context bloat)
+    // Save to history
     CHAT_HISTORY[sid].push({ role: 'user', content: message })
     CHAT_HISTORY[sid].push({ role: 'assistant', content: JSON.stringify(parsedResponse) })
-    if (CHAT_HISTORY[sid].length > 12) {
-      CHAT_HISTORY[sid] = CHAT_HISTORY[sid].slice(-12)
-    }
+    if (CHAT_HISTORY[sid].length > 10) CHAT_HISTORY[sid] = CHAT_HISTORY[sid].slice(-10)
 
-    // Enhance the products with images from the real catalog before returning
+    // Map back to full product details (images, etc)
     const finalProducts = (parsedResponse.products_mentioned || []).map((p: any) => {
-      const fullProd = allProducts.find(full => full.handle === p.handle || full.title === p.title)
+      const fullProd = allProducts.find(f => f.handle === p.handle || f.title === p.title)
       if (fullProd) {
         return {
-          title: fullProd.title,
-          handle: fullProd.handle,
-          price: fullProd.price,
-          first_image: fullProd.first_image !== 'NO IMAGE' ? fullProd.first_image : null
+          ...fullProd,
+          recommendation_reason: p.reason
         }
       }
-      return p
-    })
+      return null
+    }).filter(Boolean)
 
     return NextResponse.json({
       reply: parsedResponse.reply,
@@ -205,6 +146,6 @@ export async function POST(req: Request) {
 
   } catch (error) {
     console.error('Stylist API Error:', error)
-    return NextResponse.json({ error: 'Failed to process request' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed' }, { status: 500 })
   }
 }

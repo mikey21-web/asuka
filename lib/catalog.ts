@@ -123,10 +123,14 @@ export function getCelebrityProducts(): CatalogProduct[] {
 }
 
 /**
- * Get featured products for a category (first N products)
+ * Get a compact string representation of all products for AI context
  */
-export function getFeaturedProducts(collectionHandle: string, count = 4): CatalogProduct[] {
-    return getCollectionProducts(collectionHandle).slice(0, count)
+export function getCatalogForAI(): string {
+    return catalog.map(p => {
+        // Strip HTML from description
+        const cleanDesc = p.description.replace(/<[^>]*>?/gm, '').slice(0, 100);
+        return `${p.title}|${p.handle}|${p.price}|${cleanDesc}`;
+    }).join('\n');
 }
 
 export default catalog

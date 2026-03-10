@@ -15,24 +15,6 @@ interface Message {
     products?: CatalogProduct[]
 }
 
-/* ── Smart recommendation keywords ── */
-const KEYWORD_MAP: Record<string, string[]> = {
-    wedding: ['sherwani', 'bandhgala', 'bundi'],
-    sangeet: ['indo', 'western', 'bandhgala'],
-    haldi: ['kurta', 'yellow', 'cream'],
-    mehendi: ['kurta', 'green', 'bundi'],
-    cocktail: ['suit', 'tuxedo', 'blazer'],
-    party: ['suit', 'tuxedo', 'blazer', 'co-ord'],
-    formal: ['suit', 'formal', 'blazer'],
-    casual: ['safari', 'linen', 'shirt', 'casual'],
-    ethnic: ['sherwani', 'bandhgala', 'kurta', 'bundi'],
-    festive: ['embroidered', 'bandhgala', 'kurta'],
-    office: ['suit', 'formal', 'shirt'],
-    date: ['blazer', 'shirt', 'co-ord'],
-    reception: ['tuxedo', 'suit', 'indo'],
-    gift: ['stole', 'shoe', 'perfume'],
-}
-
 export default function AIStylist() {
     const [isOpen, setIsOpen] = useState(false)
     const [messages, setMessages] = useState<Message[]>([
@@ -147,16 +129,35 @@ export default function AIStylist() {
                                 {m.type === 'product' && m.products ? (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                         {m.products.map(p => (
-                                            <Link key={p.id} href={`/products/${p.handle}`} style={{ textDecoration: 'none', display: 'block', background: 'white', border: '1px solid #eee', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-                                                <div style={{ display: 'flex' }}>
-                                                    <img src={p.first_image} alt={p.title} style={{ width: '90px', height: '120px', objectFit: 'cover', flexShrink: 0 }} />
-                                                    <div style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', fontWeight: 500, color: BRAND_INK, marginBottom: '4px', lineHeight: 1.3 }}>{p.title}</div>
-                                                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 600, color: BRAND_COPPER }}>{formatPrice(p.price)}</div>
-                                                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: '#999', marginTop: '4px', letterSpacing: '1px' }}>VIEW PRODUCT →</div>
+                                            <div key={p.id} style={{ background: 'white', border: '1px solid #eee', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', borderRadius: '8px' }}>
+                                                <Link href={`/products/${p.handle}`} style={{ textDecoration: 'none', display: 'flex' }}>
+                                                    <img src={p.first_image} alt={p.title} style={{ width: '100px', height: '140px', objectFit: 'cover', flexShrink: 0 }} />
+                                                    <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', flex: 1 }}>
+                                                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 600, color: BRAND_INK, marginBottom: '2px', lineHeight: 1.3 }}>{p.title}</div>
+                                                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 600, color: BRAND_COPPER, marginBottom: '6px' }}>{formatPrice(p.price)}</div>
+
+                                                        {/* The "Brainy" Part: Recommendation Reason */}
+                                                        {(p as any).recommendation_reason && (
+                                                            <div style={{
+                                                                fontFamily: 'var(--font-sans)',
+                                                                fontSize: '11px',
+                                                                color: '#666',
+                                                                lineHeight: 1.4,
+                                                                background: '#f9f7f4',
+                                                                padding: '6px 8px',
+                                                                borderRadius: '4px',
+                                                                borderLeft: `2px solid ${BRAND_COPPER}`,
+                                                                marginBottom: '8px',
+                                                                fontStyle: 'italic'
+                                                            }}>
+                                                                "{(p as any).recommendation_reason}"
+                                                            </div>
+                                                        )}
+
+                                                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: BRAND_INK, fontWeight: 700, marginTop: 'auto', letterSpacing: '1px' }}>VIEW MASTERPIECE →</div>
                                                     </div>
-                                                </div>
-                                            </Link>
+                                                </Link>
+                                            </div>
                                         ))}
                                     </div>
                                 ) : (
