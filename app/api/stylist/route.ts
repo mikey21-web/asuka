@@ -165,11 +165,11 @@ export async function POST(req: Request) {
     // Save to history
     CHAT_HISTORY[sid].push({ role: 'user', content: message })
     CHAT_HISTORY[sid].push({ role: 'assistant', content: JSON.stringify(parsedResponse) })
-    if (CHAT_HISTORY[sid].length > 10) CHAT_HISTORY[sid] = CHAT_HISTORY[sid].slice(-10)
-
+    if (CHAT_HISTORY[sid].length > 10) CHAT_HISTORY[sid] = CHAT_HISTORY[sid].slice(-10);
+    
     // ── STEP 4: BACKGROUND PROFILE UPDATE ──
     // In a real serverless env, this might need to be awaited or handled via a queue
-    (async () => {
+    ; (async () => {
       const extracted = await extractProfileFromChat(CHAT_HISTORY[sid])
       if (Object.keys(extracted).length > 0) {
         await updateProfile(sid, extracted)
