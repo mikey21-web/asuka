@@ -152,8 +152,15 @@ export async function POST(req: NextRequest) {
     const rateLimit = checkRateLimit(ip)
     if (!rateLimit.success) {
       return NextResponse.json(
-        { error: 'Rate limit exceeded. Please try again in a minute.' },
-        { status: 429, headers: { 'X-RateLimit-Reset': rateLimit.reset } }
+        {
+          message: 'Our atelier is briefly handling high demand. I can still proceed with a quick concept draft and refine it on your next message.',
+          looks: [],
+          image_prompt: '',
+          degraded: true,
+          queued: true,
+          queue_position: queuePosition(sid),
+        },
+        { headers: { 'X-RateLimit-Reset': rateLimit.reset } }
       )
     }
 

@@ -54,6 +54,12 @@ function buildPrompt(basePrompt: string, garmentType: GarmentType, qualityMode: 
     ].join(', ');
 }
 
+function buildFallbackImageUrl(prompt: string, seed: number, qualityMode: QualityMode): string {
+    const width = qualityMode === 'enhanced' ? 1024 : 768;
+    const height = qualityMode === 'enhanced' ? 1344 : 1024;
+    return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&nologo=true&seed=${seed}`;
+}
+
 async function fetchPollinations(prompt: string, seed: number, qualityMode: QualityMode) {
     const width = qualityMode === 'enhanced' ? 1024 : 768;
     const height = qualityMode === 'enhanced' ? 1344 : 1024;
@@ -88,9 +94,24 @@ export async function POST(req: NextRequest) {
         const rateLimit = checkRateLimit(ip);
         
         if (!rateLimit.success) {
+            const body = await req.json();
+            const validation = validateMIYVisualizeRequest(body);
+            const basePrompt = validation.success ? validation.data!.prompt : 'Luxury Indian couture ensemble for men';
+            const qualityMode = normalizeQualityMode((body as { qualityMode?: unknown }).qualityMode);
+            const garmentType = normalizeGarmentType((body as { garmentType?: unknown }).garmentType, basePrompt);
+            const enhancedPrompt = buildPrompt(basePrompt, garmentType, qualityMode);
+            const seed = hashToSeed(`${basePrompt}:${garmentType}`);
             return NextResponse.json(
-                { error: 'Rate limit exceeded. Please try again in a minute.' },
-                { status: 429, headers: { 'X-RateLimit-Reset': rateLimit.reset } }
+                {
+                    imageUrl: buildFallbackImageUrl(enhancedPrompt, seed, qualityMode),
+                    status: 'completed',
+                    provider: 'pollinations-fallback',
+                    seed,
+                    qualityMode,
+                    garmentType,
+                    degraded: true,
+                },
+                { headers: { 'X-RateLimit-Reset': rateLimit.reset } }
             );
         }
 
@@ -148,7 +169,16 @@ export async function POST(req: NextRequest) {
             });
         } catch (aggError) {
             console.error('All image generation providers failed', aggError);
-            return NextResponse.json({ error: 'Failed to generate image from all providers' }, { status: 500 });
+            const fallbackUrl = buildFallbackImageUrl(enhancedPrompt, seed, qualityMode);
+            return NextResponse.json({
+                imageUrl: fallbackUrl,
+                status: 'completed',
+                provider: 'pollinations-fallback',
+                seed,
+                qualityMode,
+                garmentType,
+                degraded: true,
+            });
         }
 
     } catch (error) {
