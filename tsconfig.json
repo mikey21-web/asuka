@@ -25,7 +25,8 @@
       "@/*": [
         "./*"
       ]
-    }
+    },
+    "types": ["node"]
   },
   "include": [
     "global.d.ts",
