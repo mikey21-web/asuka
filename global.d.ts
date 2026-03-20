@@ -17,6 +17,11 @@ declare namespace NodeJS {
   }
 }
 
+// Explicitly declare process for environments without @types/node indexed
+declare var process: {
+  env: NodeJS.ProcessEnv;
+};
+
 declare module 'next/server' {
   export class NextRequest extends Request {
     [key: string]: any;
