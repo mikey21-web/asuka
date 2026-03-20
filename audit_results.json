@@ -1,0 +1,133 @@
+[
+  {
+    "page": "homepage",
+    "live": {
+      "title": "Asuka - Rituals of Fine Dressing – Asuka Couture",
+      "headerStyles": null,
+      "navLinksCount": 0,
+      "footerLinksCount": 0,
+      "hasAnnouncement": true,
+      "productPrice": "Rs. 21,500"
+    },
+    "local": {
+      "title": "Asuka Couture | Luxury Menswear & Bespoke Rituals of Fine Dressing",
+      "headerStyles": {
+        "color": "rgb(255, 255, 255)",
+        "fontSize": "16px",
+        "fontFamily": "__Outfit_cdd799, __Outfit_Fallback_cdd799, \"Helvetica Neue\", Arial, sans-serif",
+        "padding": "0px",
+        "bg": "rgba(15, 11, 8, 0.95)",
+        "textTransform": "none"
+      },
+      "navLinksCount": 0,
+      "footerLinksCount": 21,
+      "hasAnnouncement": true
+    },
+    "match": false
+  },
+  {
+    "page": "western_search",
+    "live": {
+      "title": "Men’s Dress Shirts & Casual Shirts - Premium Quality & Stylish Designs – Asuka Couture",
+      "headerStyles": {
+        "color": "rgb(143, 101, 77)",
+        "fontSize": "16px",
+        "fontFamily": "Outfit, sans-serif",
+        "padding": "20px 0px",
+        "bg": "rgb(95, 158, 160)",
+        "textTransform": "none"
+      },
+      "navLinksCount": 0,
+      "footerLinksCount": 15,
+      "hasAnnouncement": false,
+      "mainHeading": "SHIRTS",
+      "productPrice": "\n                \n                  Rs. 0\n                  Rs. 18,035\n                \n                \n                  \n                \n                \n                \n              "
+    },
+    "local": {
+      "title": "Asuka Couture | Luxury Menswear & Bespoke Rituals of Fine Dressing",
+      "headerStyles": {
+        "color": "rgb(255, 255, 255)",
+        "fontSize": "16px",
+        "fontFamily": "__Outfit_cdd799, __Outfit_Fallback_cdd799, \"Helvetica Neue\", Arial, sans-serif",
+        "padding": "12px 0px",
+        "bg": "rgb(95, 158, 160)",
+        "textTransform": "none"
+      },
+      "navLinksCount": 8,
+      "footerLinksCount": 21,
+      "hasAnnouncement": true,
+      "mainHeading": "SHIRTS"
+    },
+    "match": false
+  },
+  {
+    "page": "ethnic_search",
+    "live": {
+      "title": "Buy Designer Sherwani for Men in Hyderabad & Mumbai - Asuka Couture",
+      "headerStyles": {
+        "color": "rgb(143, 101, 77)",
+        "fontSize": "16px",
+        "fontFamily": "Outfit, sans-serif",
+        "padding": "20px 0px",
+        "bg": "rgb(143, 101, 77)",
+        "textTransform": "none"
+      },
+      "navLinksCount": 0,
+      "footerLinksCount": 15,
+      "hasAnnouncement": false,
+      "mainHeading": "SHERWANI",
+      "productPrice": "\n                \n                  Rs. 0\n                  Rs. 312,500\n                \n                \n                  \n                \n                \n                \n              "
+    },
+    "local": {
+      "title": "Asuka Couture | Luxury Menswear & Bespoke Rituals of Fine Dressing",
+      "headerStyles": {
+        "color": "rgb(255, 255, 255)",
+        "fontSize": "16px",
+        "fontFamily": "__Outfit_cdd799, __Outfit_Fallback_cdd799, \"Helvetica Neue\", Arial, sans-serif",
+        "padding": "12px 0px",
+        "bg": "rgb(143, 101, 77)",
+        "textTransform": "none"
+      },
+      "navLinksCount": 7,
+      "footerLinksCount": 21,
+      "hasAnnouncement": true,
+      "mainHeading": "SHERWANI"
+    },
+    "match": false
+  },
+  {
+    "page": "product_detail",
+    "live": {
+      "title": "Tiger Shroff in Charcoal Grey Woolen Suit Set – Asuka Couture",
+      "headerStyles": {
+        "color": "rgb(143, 101, 77)",
+        "fontSize": "16px",
+        "fontFamily": "Outfit, sans-serif",
+        "padding": "20px 0px",
+        "bg": "rgb(95, 158, 160)",
+        "textTransform": "none"
+      },
+      "navLinksCount": 0,
+      "footerLinksCount": 15,
+      "hasAnnouncement": false,
+      "mainHeading": "TIGER SHROFF IN CHARCOAL GREY WOOLEN SUIT SET",
+      "productPrice": "Regular price\nRs. 30,000\nTax included. Shipping calculated at checkout."
+    },
+    "local": {
+      "title": "Tiger Shroff in Charcoal Grey Woolen Suit Set | Asuka Couture | Asuka Couture",
+      "headerStyles": {
+        "color": "rgb(255, 255, 255)",
+        "fontSize": "16px",
+        "fontFamily": "__Outfit_cdd799, __Outfit_Fallback_cdd799, \"Helvetica Neue\", Arial, sans-serif",
+        "padding": "12px 0px",
+        "bg": "rgb(95, 158, 160)",
+        "textTransform": "none"
+      },
+      "navLinksCount": 8,
+      "footerLinksCount": 21,
+      "hasAnnouncement": true,
+      "mainHeading": "TIGER SHROFF IN CHARCOAL GREY WOOLEN SUIT SET"
+    },
+    "match": false
+  }
+]
