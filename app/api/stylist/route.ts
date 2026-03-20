@@ -7,14 +7,13 @@ import { checkRateLimit } from '@/lib/rate-limit'
 import { validateStylistRequest } from '@/lib/validations'
 import { getProfile, updateProfile, extractProfileFromChat } from '@/lib/profile'
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY
-})
-
 // Store a simple in-memory chat history for demo purposes
 const CHAT_HISTORY: Record<string, any[]> = {}
 
 export async function POST(req: Request) {
+  const groq = new Groq({
+    apiKey: process.env.GROQ_API_KEY
+  })
   // CORS Headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
