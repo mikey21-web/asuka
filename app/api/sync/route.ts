@@ -60,6 +60,13 @@ export async function POST(req: NextRequest) {
         image_count: p.images?.length || 0,
         first_image: p.images?.[0]?.src || '',
         all_images: p.images?.map((img: any) => img.src) || [],
+        variants: p.variants?.map((v: any) => ({
+          id: v.id,
+          title: v.title,
+          price: v.price,
+          inventory_quantity: v.inventory_quantity,
+          sku: v.sku
+        })) || [],
         product_url: `https://${SHOPIFY_DOMAIN}/products/${p.handle}`,
         description: p.body_html || '',
         sync_date: new Date()

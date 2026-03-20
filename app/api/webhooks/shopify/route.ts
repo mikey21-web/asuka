@@ -31,6 +31,13 @@ export async function POST(req: NextRequest) {
         image_count: payload.images?.length || 0,
         first_image: payload.images?.[0]?.src || '',
         all_images: payload.images?.map((img: any) => img.src) || [],
+        variants: payload.variants?.map((v: any) => ({
+          id: v.id,
+          title: v.title,
+          price: v.price,
+          inventory_quantity: v.inventory_quantity,
+          sku: v.sku
+        })) || [],
         product_url: `https://${shop}/products/${payload.handle}`,
         description: payload.body_html || '',
         updated_at: new Date()

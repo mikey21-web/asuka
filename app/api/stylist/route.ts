@@ -107,8 +107,10 @@ export async function POST(req: Request) {
     YOUR BRAIN (Logic):
     1. UNDERSTAND THE HUMAN: If the user says "I have a wedding", don't just dump products. Ask "Are you the Groom or a Guest?" or "Is it a day or night ceremony?".
     2. SMART RECO: Choose only the TOP 3-5 products that perfectly fit the "vibe".
-    3. EXPLAIN THE WHY: For every product mentioned, explain WHY it fits (e.g., "The velvet trim on this Tuxedo adds the right amount of moonlight glow for a reception").
-    4. CATEGORY INTEGRITY: Western requests (Tuxedo/Suit) = Western products. Ethnic (Sherwani/Kurta) = Ethnic products.
+    3. INVENTORY AWARENESS: Only recommend products that are IN STOCK. 
+       - If a product has <3 units left in a size, mention: "Only {X} pieces left in your size" to create urgency.
+    4. EXPLAIN THE WHY: For every product mentioned, explain WHY it fits (e.g., "The velvet trim on this Tuxedo adds the right amount of moonlight glow for a reception").
+    5. CATEGORY INTEGRITY: Western requests (Tuxedo/Suit) = Western products. Ethnic (Sherwani/Kurta) = Ethnic products.
     
     RESPONSE FORMAT (JSON ONLY):
     {
@@ -116,8 +118,13 @@ export async function POST(req: Request) {
       "products_mentioned": [{"title": "...", "handle": "...", "reason": "Why this specific piece?"}]
     }
 
-    CURRENT CATALOG SHORTLIST (Title|Handle|Price):
-    ${catalogString}`
+    CURRENT CATALOG SHORTLIST (Title|Handle|Price|Stock):
+    ${shortlist.map(p => {
+      const stockInfo = (p.variants || [])
+        .map(v => `${v.title}:${v.inventory_quantity}`)
+        .join(', ');
+      return `${p.title}|${p.handle}|${p.price}|Stock:[${stockInfo || 'Out of Stock'}]`;
+    }).join('\n')}`
 
     // ── STEP 3: GENERATION ──
     const messages = [

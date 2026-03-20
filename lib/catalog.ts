@@ -17,6 +17,13 @@ export interface CatalogProduct {
     all_images: string[]
     product_url: string
     description: string
+    variants?: {
+        id: number
+        title: string
+        price: string
+        inventory_quantity: number
+        sku?: string
+    }[]
 }
 
 // Cast the imported JSON
@@ -160,7 +167,8 @@ export async function getProductsFromDB(): Promise<CatalogProduct[]> {
                 first_image: p.first_image,
                 all_images: p.all_images,
                 product_url: p.product_url,
-                description: p.description
+                description: p.description,
+                variants: p.variants
             })) as CatalogProduct[]
         }
     } catch (err) {
