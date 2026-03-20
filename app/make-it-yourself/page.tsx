@@ -1,12 +1,9 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
-
-const BRAND_COPPER = '#a17a58'
-const BRAND_INK = '#1a1410'
-const BG_CREAM = '#fffdfd'
+import VoiceInput from '@/components/ai/VoiceInput'
 
 interface Look {
     name: string
@@ -15,6 +12,10 @@ interface Look {
     addons: string[]
     image_url: string
 }
+
+type RenderMode = 'fast' | 'enhanced'
+type GarmentType = 'sherwani' | 'bandhgala' | 'kurta' | 'suit' | 'general'
+type PreviewEvent = 'preview_started' | 'preview_completed' | 'preview_failed' | 'preview_enhance_clicked'
 
 export default function MakeItYourself() {
     const [step, setStep] = useState(1)
@@ -43,6 +44,7 @@ export default function MakeItYourself() {
     const [looks, setLooks] = useState<Look[]>([])
     const [chatLog, setChatLog] = useState<{ role: string, content: string }[]>([])
     const [imagePrompt, setImagePrompt] = useState<string | null>(null)
+    const [miySessionId] = useState(() => `miy-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`)
 
     // Step 3.5: Lead Capture
     const [clientName, setClientName] = useState('')
@@ -55,6 +57,10 @@ export default function MakeItYourself() {
     const [conceptImg, setConceptImg] = useState<string | null>(null)
     const [imgLoading, setImgLoading] = useState(false)
     const [isZoomed, setIsZoomed] = useState(false)
+    const [renderMode, setRenderMode] = useState<RenderMode>('fast')
+    const [lastVisualSeed, setLastVisualSeed] = useState<number | null>(null)
+    const [lastRenderMs, setLastRenderMs] = useState<number | null>(null)
+    const [lastProvider, setLastProvider] = useState<string | null>(null)
 
     const greetingRef = useRef(false)
 
@@ -85,6 +91,66 @@ export default function MakeItYourself() {
 
     const chatContainerRef = useRef<HTMLDivElement>(null)
 
+    const handleStartOver = () => {
+        greetingRef.current = false
+        setStep(1)
+        setLooks([])
+        setMsg('')
+        setLoading(false)
+        setChatLog([])
+        setImagePrompt(null)
+        setClientName('')
+        setClientPhone('')
+        setPendingLook(null)
+        setSelectedLook(null)
+        setConceptImg(null)
+        setImgLoading(false)
+        setIsZoomed(false)
+        setRenderMode('fast')
+        setLastVisualSeed(null)
+        setLastRenderMs(null)
+        setLastProvider(null)
+    }
+
+    const trackPreviewEvent = async (
+        event: PreviewEvent,
+        payload: Record<string, unknown>
+    ) => {
+        try {
+            await fetch('/api/analytics/events', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    event,
+                    page: 'make-it-yourself',
+                    ts: new Date().toISOString(),
+                    ...payload,
+                }),
+                keepalive: true,
+            })
+        } catch {
+            // Non-blocking telemetry
+        }
+    }
+
+    const inferGarmentType = (look: Look, prompt: string): GarmentType => {
+        const text = `${look.name} ${look.direction} ${prompt}`.toLowerCase()
+        if (text.includes('sherwani')) return 'sherwani'
+        if (text.includes('bandhgala') || text.includes('nehru')) return 'bandhgala'
+        if (text.includes('kurta')) return 'kurta'
+        if (text.includes('suit') || text.includes('blazer') || text.includes('tuxedo')) return 'suit'
+        return 'general'
+    }
+
+    const deterministicSeed = (value: string): number => {
+        let hash = 0
+        for (let i = 0; i < value.length; i += 1) {
+            hash = ((hash << 5) - hash) + value.charCodeAt(i)
+            hash |= 0
+        }
+        return Math.abs(hash) % 1000000
+    }
+
     // Scroll page to top ONLY when step changes
     // useEffect(() => {
     //     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -100,11 +166,14 @@ export default function MakeItYourself() {
         }
     }, [chatLog]) // Removed 'loading' and 'step' to prevent excessive scrolling
 
-    const handleChat = async () => {
-        if (!msg.trim()) return
+    const handleChat = async (forcedMessage?: string) => {
+        const composedMessage = (forcedMessage ?? msg).trim()
+        if (!composedMessage) return
         setLoading(true)
-        const userMsg = { role: 'user', content: msg }
-        setChatLog(prev => [...prev, userMsg])
+        const outgoing = composedMessage
+        const userMsg = { role: 'user', content: outgoing }
+        const nextHistory = [...chatLog, userMsg]
+        setChatLog(nextHistory)
         setMsg('')
 
         try {
@@ -113,15 +182,16 @@ export default function MakeItYourself() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     inputs: { occasion, location, city, time, vibe, colors, avoidColors, budget, height, weight, skin, fit, ownedItems },
-                    message: msg,
-                    history: chatLog
+                    message: outgoing,
+                    history: nextHistory.slice(-10),
+                    session_id: miySessionId,
                 })
             })
             const data = await res.json()
             setChatLog(prev => [...prev, { role: 'assistant', content: data.message }])
             if (data.looks) setLooks(data.looks)
             if (data.image_prompt) setImagePrompt(data.image_prompt)
-        } catch (err) {
+        } catch {
             setChatLog(prev => [...prev, { role: 'assistant', content: "My apologies, the atelier is currently busy. Could we try that again?" }])
         }
         setLoading(false)
@@ -173,6 +243,124 @@ Please provide a detailed design summary and an image prompt for this specific v
         await startVisualization(look)
     }
 
+    const runVisualization = async (look: Look, mode: RenderMode, keepCurrentImage = false) => {
+        const startedAt = performance.now()
+        setRenderMode(mode)
+        setImgLoading(true)
+        if (!keepCurrentImage) {
+            setConceptImg(null)
+        }
+
+        const fallbackImage = "https://asukacouture.com/cdn/shop/files/Untitled_design_70x.png"
+
+        const loadImage = (url: string, timeoutMs = 15000): Promise<string> => {
+            return new Promise((resolve, reject) => {
+                const img = new Image()
+                const timer = setTimeout(() => {
+                    img.src = ''
+                    reject(new Error('Image load timeout'))
+                }, timeoutMs)
+
+                img.onload = () => {
+                    clearTimeout(timer)
+                    resolve(url)
+                }
+                img.onerror = () => {
+                    clearTimeout(timer)
+                    reject(new Error('Image load failed'))
+                }
+                img.src = url
+            })
+        }
+
+        const prompt = imagePrompt || `Luxury Indian ${look.name} menswear, ${look.direction}, exquisite textures`
+        const garmentType = inferGarmentType(look, prompt)
+        const seed = lastVisualSeed ?? deterministicSeed(`${look.name}:${prompt}`)
+        if (lastVisualSeed === null) {
+            setLastVisualSeed(seed)
+        }
+
+        void trackPreviewEvent('preview_started', {
+            mode,
+            garmentType,
+            look: look.name,
+            seed,
+        })
+
+        try {
+            const response = await fetch('/api/miy-visualize', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt,
+                    qualityMode: mode,
+                    seed,
+                    garmentType,
+                })
+            })
+
+            if (!response.ok) throw new Error('API Error')
+
+            const data = await response.json()
+
+            if (data.imageUrl) {
+                const safeUrl = await loadImage(data.imageUrl)
+                const elapsedMs = Math.round(performance.now() - startedAt)
+                setConceptImg(safeUrl)
+                setLastRenderMs(elapsedMs)
+                setLastProvider(data.provider || 'unknown')
+                setImgLoading(false)
+
+                void trackPreviewEvent('preview_completed', {
+                    mode,
+                    garmentType,
+                    look: look.name,
+                    seed,
+                    provider: data.provider || 'unknown',
+                    elapsedMs,
+                })
+            } else {
+                throw new Error('No image returned')
+            }
+        } catch (error) {
+            console.error('Visualization failed, using direct fallback:', error)
+
+            const width = mode === 'enhanced' ? 1024 : 768
+            const height = mode === 'enhanced' ? 1344 : 1024
+            const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&nologo=true&seed=${seed}`
+
+            try {
+                const safeFallbackUrl = await loadImage(fallbackUrl)
+                const elapsedMs = Math.round(performance.now() - startedAt)
+                setConceptImg(safeFallbackUrl)
+                setLastRenderMs(elapsedMs)
+                setLastProvider('pollinations-fallback')
+
+                void trackPreviewEvent('preview_completed', {
+                    mode,
+                    garmentType,
+                    look: look.name,
+                    seed,
+                    provider: 'pollinations-fallback',
+                    elapsedMs,
+                })
+            } catch {
+                setConceptImg(fallbackImage)
+                setLastProvider('static-fallback')
+                setLastRenderMs(Math.round(performance.now() - startedAt))
+                void trackPreviewEvent('preview_failed', {
+                    mode,
+                    garmentType,
+                    look: look.name,
+                    seed,
+                    provider: 'static-fallback',
+                })
+            } finally {
+                setImgLoading(false)
+            }
+        }
+    }
+
     const startVisualization = async (look: Look) => {
         // Save lead to our database first
         try {
@@ -205,53 +393,18 @@ Please provide a detailed design summary and an image prompt for this specific v
 
         setSelectedLook(look)
         setStep(4)
-        setImgLoading(true)
-        setConceptImg(null)
+        await runVisualization(look, 'fast')
+    }
 
-        try {
-            // Simplified prompt optimized for Bytez/Flux
-            const prompt = imagePrompt || `Luxury Indian ${look.name} menswear, ${look.direction}, exquisite textures`
-
-            const response = await fetch('/api/miy-visualize', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt })
-            });
-
-            if (!response.ok) throw new Error('API Error');
-
-            const data = await response.json();
-
-            if (data.imageUrl) {
-                // Preload the base64 image
-                const img = new Image()
-                img.src = data.imageUrl
-                img.onload = () => {
-                    setConceptImg(data.imageUrl)
-                    setImgLoading(false)
-                }
-            } else {
-                throw new Error('No image returned');
-            }
-        } catch (error) {
-            console.error("Bytez Generation failed, falling back to Pollinations:", error)
-
-            // Fallback to Pollinations if Bytez fails (redundancy for the live demo)
-            const seed = Math.floor(Math.random() * 1000000)
-            const fallbackPrompt = imagePrompt || `luxury Indian ${look.name} menswear, ${look.direction}`
-            const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(fallbackPrompt)}?width=1024&height=1344&nologo=true&seed=${seed}`
-
-            const img = new Image()
-            img.src = fallbackUrl
-            img.onload = () => {
-                setConceptImg(fallbackUrl)
-                setImgLoading(false)
-            }
-            img.onerror = () => {
-                setImgLoading(false)
-                setConceptImg("https://asukacouture.com/cdn/shop/files/Untitled_design_70x.png")
-            }
-        }
+    const enhanceConcept = async () => {
+        if (!selectedLook || imgLoading) return
+        void trackPreviewEvent('preview_enhance_clicked', {
+            look: selectedLook.name,
+            fromMode: renderMode,
+            lastRenderMs,
+            lastProvider,
+        })
+        await runVisualization(selectedLook, 'enhanced', true)
     }
 
     const finalizeBrief = () => {
@@ -453,6 +606,12 @@ Please assign a Master Draper to finalize this commission.`
                                 <div className="text-center mb-4 shrink-0">
                                     <h2 className="text-xl font-serif italic mb-1 text-[#1a1410]">Conversational Curator</h2>
                                     <p className="text-[10px] uppercase tracking-widest text-[#a17a58]">Designing for your {occasion}...</p>
+                                    <button
+                                        onClick={handleStartOver}
+                                        className="mt-3 text-[10px] uppercase tracking-[2px] text-gray-500 hover:text-[#a17a58]"
+                                    >
+                                        Start Over
+                                    </button>
                                 </div>
 
                                 <div ref={chatContainerRef} className="flex-1 min-h-0 border border-gray-100 bg-[#fafafa]/50 rounded-lg p-4 md:p-6 overflow-y-auto mb-4 flex flex-col gap-4">
@@ -504,7 +663,7 @@ Please assign a Master Draper to finalize this commission.`
                                             ].map(opt => (
                                                 <button
                                                     key={opt}
-                                                    onClick={() => { setMsg(opt); handleChat(); }}
+                                                    onClick={() => { void handleChat(opt) }}
                                                     className="px-3 py-1.5 rounded-full border border-[#a17a58]/30 bg-white hover:bg-[#a17a58] hover:text-white text-[9px] uppercase tracking-widest text-[#a17a58] transition-all"
                                                 >
                                                     {opt}
@@ -521,7 +680,8 @@ Please assign a Master Draper to finalize this commission.`
                                             onKeyDown={e => e.key === 'Enter' && handleChat()}
                                             disabled={loading}
                                         />
-                                        <button onClick={handleChat} disabled={loading} className="bg-[#a17a58] text-white px-8 py-4 text-xs uppercase tracking-[2px] hover:bg-[#1a1410] transition-all shadow-md">
+                                        <VoiceInput onTranscription={setMsg} isChatLoading={loading} />
+                                        <button onClick={() => { void handleChat() }} disabled={loading} className="bg-[#a17a58] text-white px-8 py-4 text-xs uppercase tracking-[2px] hover:bg-[#1a1410] transition-all shadow-md">
                                             Send
                                         </button>
                                     </div>
@@ -590,7 +750,28 @@ Please assign a Master Draper to finalize this commission.`
                         {step === 4 && (
                             <div className="animate-in fill-mode-both zoom-in-95 duration-1000 text-center">
                                 <h2 className="text-2xl font-serif italic mb-2 text-[#1a1410]">{selectedLook?.name}</h2>
-                                <p className="text-[10px] uppercase tracking-[4px] text-[#a17a58] mb-12 font-bold animate-pulse">Processing High-Resolution Render...</p>
+                                <p className="text-[10px] uppercase tracking-[4px] text-[#a17a58] mb-12 font-bold animate-pulse">
+                                    {imgLoading
+                                        ? renderMode === 'enhanced' ? 'Enhancing Detail Pass...' : 'Generating Fast Preview...'
+                                        : renderMode === 'enhanced' ? 'Enhanced Couture Preview Ready' : 'Fast Preview Ready'}
+                                </p>
+                                {!imgLoading && conceptImg && (
+                                    <div className="mb-8 flex flex-wrap justify-center gap-3">
+                                        <span className="px-3 py-1.5 text-[9px] uppercase tracking-[2px] border border-[#a17a58]/30 text-[#a17a58] bg-[#a17a58]/5">
+                                            {renderMode === 'enhanced' ? 'Enhanced' : 'Fast'}
+                                        </span>
+                                        {lastRenderMs !== null && (
+                                            <span className="px-3 py-1.5 text-[9px] uppercase tracking-[2px] border border-gray-300 text-gray-600 bg-white">
+                                                {lastRenderMs}ms
+                                            </span>
+                                        )}
+                                        {lastProvider && (
+                                            <span className="px-3 py-1.5 text-[9px] uppercase tracking-[2px] border border-gray-300 text-gray-600 bg-white">
+                                                {lastProvider}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
 
                                 <div
                                     onClick={() => !imgLoading && conceptImg && setIsZoomed(true)}
@@ -612,7 +793,7 @@ Please assign a Master Draper to finalize this commission.`
                                         </div>
                                     ) : (
                                         <>
-                                            <img src={conceptImg || ''} className="w-full h-full object-cover transition-all duration-1000 animate-in fade-in zoom-in-110" />
+                                            <img src={conceptImg || ''} alt="AI concept preview" className="w-full h-full object-cover transition-all duration-1000 animate-in fade-in zoom-in-110" />
                                             <div className="absolute inset-0 bg-[#1a1410]/0 group-hover:bg-[#1a1410]/20 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
                                                 <p className="text-white text-[10px] uppercase tracking-[3px] font-bold bg-[#a17a58] px-6 py-3 shadow-2xl">Check Fabric Detail</p>
                                             </div>
@@ -643,8 +824,16 @@ Please assign a Master Draper to finalize this commission.`
                                 )}
 
                                 <div className="flex flex-col items-center gap-6">
-                                    <div className="flex justify-center gap-4">
+                                    <div className="flex flex-wrap justify-center gap-4">
                                         <button onClick={() => setStep(3)} className="text-[10px] uppercase tracking-[2px] text-gray-400 hover:text-[#a17a58] transition-all">← Different Direction</button>
+                                        {conceptImg && !imgLoading && renderMode === 'fast' && (
+                                            <button
+                                                onClick={() => { void enhanceConcept() }}
+                                                className="border border-[#1a1410] text-[#1a1410] px-8 py-4 text-xs uppercase tracking-[3px] hover:bg-[#1a1410] hover:text-white transition-all"
+                                            >
+                                                Enhance Preview
+                                            </button>
+                                        )}
                                         {!imgLoading ? (
                                             <button onClick={() => setStep(5)} className="bg-[#1a1410] text-white px-12 py-4 text-xs uppercase tracking-[3px] hover:bg-[#a17a58] transition-all shadow-lg">
                                                 Finalize & Bespoke Details →
@@ -656,7 +845,11 @@ Please assign a Master Draper to finalize this commission.`
                                         )}
                                     </div>
                                     {imgLoading && (
-                                        <p className="text-[9px] text-gray-400 italic">Advanced rendering in progress. You may proceed while we weave...</p>
+                                        <p className="text-[9px] text-gray-400 italic">
+                                            {renderMode === 'enhanced'
+                                                ? 'High-quality enhancement in progress. You may continue while we refine detail.'
+                                                : 'Fast preview in progress. You may proceed while we weave...'}
+                                        </p>
                                     )}
                                 </div>
                                 {conceptImg === null && !imgLoading && (
@@ -715,7 +908,7 @@ Please assign a Master Draper to finalize this commission.`
                                         <div className="p-6 bg-[#fafafa] border border-gray-100 rounded-sm md:col-span-2">
                                             <p className="text-[10px] uppercase tracking-widest text-[#a17a58] mb-4">Brief Preview</p>
                                             <p className="text-[11px] font-mono text-gray-500 italic whitespace-pre-line">
-                                                {designResult ? designResult.reply : `"${finalizeBrief().slice(0, 150)}..."`}
+                                                {designResult?.reply || `"${finalizeBrief().slice(0, 150)}..."`}
                                             </p>
                                         </div>
                                     </div>

@@ -1,25 +1,59 @@
 'use client'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState } from 'react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import ProductCard from '@/components/ProductCard' // Added this import
-import { HERO_ETHNIC, HERO_WESTERN, STORES, BRAND_SLIDER_IMAGES, formatPrice } from '@/lib/site-data'
-import { getCelebrityProducts, type CatalogProduct } from '@/lib/catalog'
+import { HERO_ETHNIC, HERO_WESTERN, STORES, BRAND_SLIDER_IMAGES } from '@/lib/site-data'
+import { getCelebrityProducts } from '@/lib/catalog'
 import DigitalStylistSection from '@/components/sections/DigitalStylist'
 
 /* ── Preload celebrity products at module level ── */
 export default function Home() {
   const celebrities = getCelebrityProducts()
-  const [heroTab, setHeroTab] = useState<'ethnic' | 'western'>('ethnic')
 
   return (
     <>
       <Header />
       <main style={{ background: 'white', minHeight: '100vh' }}>
 
-        {/* ═══ 1. SPLIT HERO (Exactly matching live site) ═══ */}
+        {/* ═══ 1. AI-FIRST HERO ═══ */}
+        <section className="relative overflow-hidden bg-[#0e0b09] text-white">
+          <div className="absolute inset-0 opacity-40" style={{
+            background: 'radial-gradient(circle at 20% 20%, rgba(161,122,88,0.35), transparent 40%), radial-gradient(circle at 80% 0%, rgba(201,168,76,0.22), transparent 36%)'
+          }} />
+          <div className="relative max-w-[1240px] mx-auto px-6 md:px-10 py-20 md:py-28 grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-12 items-center">
+            <div>
+              <p className="font-mono text-[10px] tracking-[4px] uppercase text-[#d7be9b] mb-5">Asuka AI Stylist</p>
+              <h1 className="font-serif text-[38px] leading-[1.05] md:text-[64px] max-w-[760px] mb-6">
+                Dress Like It Was
+                <em className="font-normal text-[#d9ba91]"> Tailored For Tonight</em>
+              </h1>
+              <p className="font-sans text-[#ddd0c3] text-[16px] leading-relaxed max-w-[620px] mb-9">
+                Meet Ayaan, your personal couture stylist. Tell us your occasion, fit, and mood; get curated looks, live size guidance, and a direct handover to our atelier.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link href="/ai-stylist" className="inline-flex items-center justify-center px-9 py-4 bg-[#a17a58] text-white no-underline font-mono text-[11px] tracking-[3px] uppercase hover:bg-[#b98a67] transition-colors">
+                  Launch AI Stylist
+                </Link>
+                <Link href="/make-it-yourself" className="inline-flex items-center justify-center px-9 py-4 border border-[#7e6854] text-[#e8dac7] no-underline font-mono text-[11px] tracking-[3px] uppercase hover:border-[#a17a58] hover:text-white transition-colors">
+                  Open MIY Atelier
+                </Link>
+              </div>
+            </div>
+            <div className="border border-[#3c3027] bg-[#17120f] p-6 md:p-8 rounded-sm shadow-[0_30px_70px_rgba(0,0,0,0.35)]">
+              <p className="font-mono text-[10px] tracking-[2px] uppercase text-[#b69878] mb-4">Live Flow</p>
+              <ol className="space-y-3 text-[14px] text-[#e5d7c6]">
+                <li>1. Share event, city, and style vibe</li>
+                <li>2. Get tailored looks from the synced catalog</li>
+                <li>3. Use AI sizing with easy fit inputs and optional photos</li>
+                <li>4. Move to WhatsApp with a ready brief</li>
+              </ol>
+            </div>
+          </div>
+        </section>
+
+        {/* ═══ 2. SPLIT HERO COLLECTION ENTRY ═══ */}
         <section className="relative w-full flex flex-col md:flex-row overflow-hidden bg-black gap-0">
           {/* LEFT: ETHNIC WEAR */}
           <Link href="/ethnic-home" className="relative flex-1 group overflow-hidden block w-full min-h-[80vh] md:h-screen">
@@ -70,10 +104,10 @@ export default function Home() {
           </Link>
         </section>
 
-        {/* ═══ 1.5 DIGITAL ATELIER (AI Integration) ═══ */}
+        {/* ═══ 2.5 DIGITAL ATELIER (AI Integration) ═══ */}
         <DigitalStylistSection />
 
-        {/* ═══ 2. SPOTTED IN ASUKA — Celebrity grid ═══ */}
+        {/* ═══ 3. SPOTTED IN ASUKA — Celebrity grid ═══ */}
         <section className="py-[60px] md:py-[80px]">
           <div className="page-width max-w-[1200px] mx-auto px-6 md:px-10">
             <div className="text-center mb-10">
@@ -135,11 +169,11 @@ export default function Home() {
               ))}
             </div>
             <div style={{ textAlign: 'center' }}>
-              <a href="https://asukacouture.com/pages/book-an-appointment" target="_blank" rel="noopener noreferrer" style={{
+              <Link href="/book-an-appointment" style={{
                 display: 'inline-block', padding: '14px 40px', border: '1px solid #1a1410',
                 fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 400, letterSpacing: '2px',
                 textTransform: 'uppercase', color: '#1a1410', textDecoration: 'none',
-              }}>BOOK AN APPOINTMENT</a>
+              }}>BOOK AN APPOINTMENT</Link>
             </div>
           </div>
         </section>

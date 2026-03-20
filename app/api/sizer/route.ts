@@ -23,7 +23,30 @@ const SIZE_INDEX: Record<string, number> = {
   'EXTRA LARGE': 4, 'DOUBLE XL': 5,
 }
 
-function localSizer(mode: string, brand?: string, size?: string, chest?: number) {
+interface SizerRequestBody {
+  mode?: string
+  brand?: string
+  size?: string
+  chest?: number
+  waist?: number
+  product_type?: string
+  fit_preference?: string
+  body_shape?: string
+  issues?: string[]
+  height?: string
+  weight?: string
+  photos?: string[]
+}
+
+interface SizerResult {
+  size: string
+  confidence: string | number
+  reasoning: string
+  fallback: boolean
+  alternative?: string
+}
+
+function localSizer(mode: string, brand?: string, size?: string, chest?: number): SizerResult {
   if (mode === 'measurements' && chest) {
     let idx = 5
     if (chest <= 36) idx = 0
@@ -82,10 +105,9 @@ export async function POST(req: NextRequest) {
 
     // Safely merge validated data with other optional parameters
     const body = { ...rawBody, ...validation.data };
-    const { mode, brand, size, chest, waist, product_type, session_id } = body
+    const { mode, brand, size, chest, waist, product_type } = body
 
-    const now = new Date()
-    let result: any = null
+    let result: SizerResult | null = null
     let usedFallback = false
 
     // ── STEP 1: CACHE LOOKUP ──
@@ -132,16 +154,26 @@ export async function POST(req: NextRequest) {
           signal: AbortSignal.timeout(5000),
         })
         if (n8nRes.ok) {
-          const data = await n8nRes.json()
+          const data = await n8nRes.json() as {
+            asuka_size?: string
+            size?: string
+            recommended_size?: string
+            confidence?: string | number
+            reasoning?: string
+            explanation?: string
+            message?: string
+            alternative?: string
+          }
           result = {
-            size: data.asuka_size || data.size || data.recommended_size,
+            size: data.asuka_size || data.size || data.recommended_size || 'M',
             confidence: data.confidence ?? 0.88,
-            reasoning: data.reasoning || data.explanation || data.message,
+            reasoning: data.reasoning || data.explanation || data.message || 'Size mapped from sizing webhook response.',
             fallback: false,
+            alternative: data.alternative,
           }
         }
       } catch {
-        usedFallback = true
+        // Continue with AI/local fallback.
       }
     }
 
@@ -149,6 +181,7 @@ export async function POST(req: NextRequest) {
       try {
         const { groqChat } = await import('@/lib/groq')
         const { fit_preference, body_shape, issues, height, weight, photos } = body
+        const issueList = Array.isArray(issues) ? issues : []
         const hasPhotos = Array.isArray(photos) && photos.length > 0
 
         const systemMsg = hasPhotos
@@ -160,7 +193,7 @@ export async function POST(req: NextRequest) {
              Product category for fitting: ${product_type}. 
              Client's fit preference: ${fit_preference || 'Regular'}. 
              Client's body shape: ${body_shape || 'Average'}. 
-             Known fit issues: ${issues?.length > 0 ? issues.join(', ') : 'None'}.
+             Known fit issues: ${issueList.length > 0 ? issueList.join(', ') : 'None'}.
              
              Task: act as Asuka's Head of Fit & Tailoring. Map these inputs to their ideal Asuka size (Number format: 36, 38, 40, 42, 44, 46). 
              
@@ -177,7 +210,7 @@ export async function POST(req: NextRequest) {
                "reasoning": "Detailed, conversational reasoning in 1-2 sentences."
              }`
 
-        let aiResponse: string;
+        let aiResponse = '{}'
 
         if (hasPhotos) {
           // Use Llama Vision for photo analysis
@@ -199,7 +232,7 @@ export async function POST(req: NextRequest) {
           ]
 
           const completion = await groq.chat.completions.create({
-            messages: messages as any,
+            messages: messages as never,
             model: 'llama-3.2-11b-vision-preview',
             temperature: 0.2,
             response_format: { type: "json_object" }
@@ -215,7 +248,9 @@ export async function POST(req: NextRequest) {
         let aiResult = { size: "40", alternative: "42", confidence: "Medium", reasoning: "Based on your inputs, we recommend taking a standard size and speaking to a tailor." }
         try {
           aiResult = JSON.parse(aiResponse.replace(/```(json)?|```/g, '').trim())
-        } catch (e) { console.error('Failed to parse sizer JSON:', aiResponse) }
+        } catch {
+          console.error('Failed to parse sizer JSON:', aiResponse)
+        }
 
         result = {
           size: aiResult.size,
@@ -226,7 +261,7 @@ export async function POST(req: NextRequest) {
         }
       } catch (aiErr) {
         console.warn('AI Sizer fallback failed:', aiErr)
-        result = localSizer(mode || 'brand_size', brand, size, body.chest)
+        result = localSizer(mode || 'brand_size', brand, size, chest)
         result.alternative = "MTO"
         result.confidence = "Medium"
         usedFallback = true
@@ -285,8 +320,9 @@ export async function POST(req: NextRequest) {
       status: 'ok',
     }, { headers })
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Sizer API error:', err)
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    const message = err instanceof Error ? err.message : 'Internal error'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

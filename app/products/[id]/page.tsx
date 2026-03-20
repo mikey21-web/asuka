@@ -1,7 +1,7 @@
 'use client'
 
 import { useParams } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
@@ -10,16 +10,13 @@ import { formatPrice } from '@/lib/site-data'
 
 import ProductSizerModal from '@/components/ai/ProductSizerModal'
 
-const TEAL = '#008b8b'
-const ETHNIC_BROWN = '#8f654d'
-const DARK_INK = '#1a1410'
-const SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL']
+const SIZES = ['S', 'M', 'L', 'XL']
 
 export default function ProductPage() {
     const { id } = useParams()
     const handle = id as string
     const product = getProductByHandle(handle)
-    const [selectedSize, setSelectedSize] = useState('XS')
+    const [selectedSize, setSelectedSize] = useState('M')
     const [mainImgIdx, setMainImgIdx] = useState(0)
     const [sizerOpen, setSizerOpen] = useState(false)
     const [aiRecommendedSize, setAiRecommendedSize] = useState<string | null>(null)
@@ -119,11 +116,14 @@ export default function ProductPage() {
                         {/* Size Section */}
                         <div className="mb-10 pt-6 border-t border-[#eee]">
                             <div className="flex justify-between items-center mb-4">
-                                <span className="text-[11px] sm:text-[12px] font-mono tracking-[3px] uppercase font-bold text-[#1a1410]">Size</span>
-                                <Link href="/sizing" className="flex items-center gap-1.5 text-[11px] font-mono tracking-[1px] text-black border-b border-black/20 hover:border-black transition-all no-underline">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M7 12h10M7 8h10M7 16h10M12 7v10" /><rect x="3" y="5" width="18" height="14" rx="2" /></svg>
-                                    Size Chart
-                                </Link>
+                                <span className="text-[11px] sm:text-[12px] font-mono tracking-[3px] uppercase font-bold text-[#1a1410]">Quick Size</span>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-[10px] font-mono tracking-[1px] text-[#666]">Everyday fit: S / M / L / XL</span>
+                                    <Link href="/sizing" className="flex items-center gap-1.5 text-[11px] font-mono tracking-[1px] text-black border-b border-black/20 hover:border-black transition-all no-underline">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M7 12h10M7 8h10M7 16h10M12 7v10" /><rect x="3" y="5" width="18" height="14" rx="2" /></svg>
+                                        Size Chart
+                                    </Link>
+                                </div>
                             </div>
 
                             <div className="flex flex-wrap gap-2 mb-8">

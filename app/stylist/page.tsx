@@ -190,7 +190,12 @@ function ProductCard({ product }: { product: typeof PRODUCTS[0] }) {
 }
 
 /* ── CHAT MESSAGE TYPE ── */
-type ChatMsg = { role: 'user' | 'assistant'; content: string; products?: typeof PRODUCTS }
+type ChatMsg = {
+  role: 'user' | 'assistant'
+  content: string
+  products?: typeof PRODUCTS
+  followUps?: string[]
+}
 
 export default function StylistPage() {
   const [step, setStep] = useState(0)
@@ -240,7 +245,7 @@ export default function StylistPage() {
     const parts = []
     if (occasion) parts.push(`Occasion: ${OCCASIONS.find(o => o.id === occasion)?.label}`)
     if (location) parts.push(`Setting: ${location}`)
-    if (city) parts.push(`City: ${city}`)
+    if (city) parts.push(`City/Area: ${city}`)
     if (time) parts.push(`Time: ${time}`)
     parts.push(`Vibe: ${vibeClassicBold < 35 ? 'classic' : vibeClassicBold > 65 ? 'bold' : 'balanced'}, ${vibeMinimalEmb < 35 ? 'minimal' : vibeMinimalEmb > 65 ? 'embellished' : 'refined'}`)
     if (colorPrefs.length) parts.push(`Preferred colors: ${colorPrefs.join(', ')}`)
@@ -271,15 +276,27 @@ export default function StylistPage() {
     const occasionLabel = OCCASIONS.find(o => o.id === occasion)?.label || 'special'
     const vibeLabel = vibeClassicBold < 35 ? 'classic' : vibeClassicBold > 65 ? 'bold' : 'refined'
     const colorNote = colorPrefs.length ? `, in ${colorPrefs.join(' & ')}` : ''
+    const cityNote = city ? ` for ${city}` : ''
 
     // Generate initial product suggestions via mock
-    const initMsg = `Suggest looks for a ${occasionLabel} occasion, ${vibeLabel} vibe${colorNote}`
+    const initMsg = `Suggest looks for a ${occasionLabel} occasion${cityNote}, ${vibeLabel} vibe${colorNote}`
     const mock = mockAIResponse(initMsg, occasion)
 
     const welcome: ChatMsg = {
       role: 'assistant',
-      content: `Welcome to Asuka Couture's styling studio. Based on your preferences \u2014 a **${occasionLabel}** occasion, ${vibeLabel} vibe${colorNote} \u2014 I have some wonderful directions for you.\n\n${mock.reply}`,
+      content: `Welcome to Asuka Couture's styling studio. Based on your preferences \u2014 a **${occasionLabel}** occasion${city ? ` in **${city}**` : ''}, ${vibeLabel} vibe${colorNote} \u2014 I have some wonderful directions for you.\n\n${mock.reply}`,
       products: mock.products,
+      followUps: city
+        ? [
+          `Show ${city} inspired options`,
+          'Give me one traditional and one modern look',
+          'Suggest weather-friendly fabric options'
+        ]
+        : [
+          'Suggest 2-3 looks for me',
+          'Should I go classic or bold?',
+          'I can share my city for local style suggestions'
+        ],
     }
     setMsgs([welcome])
     setStep(2)
@@ -301,18 +318,33 @@ export default function StylistPage() {
       const data = await res.json()
       if (!isContext && data.reply) {
         const products = extractMentionedProducts(data.reply)
-        setMsgs(m => [...m, { role: 'assistant', content: data.reply, products: products.length > 0 ? products : undefined }])
+        const followUps = Array.isArray(data.follow_up_prompts)
+          ? data.follow_up_prompts.filter((p: unknown) => typeof p === 'string').slice(0, 3)
+          : undefined
+        setMsgs(m => [...m, {
+          role: 'assistant',
+          content: data.reply,
+          products: products.length > 0 ? products : undefined,
+          followUps: followUps && followUps.length > 0 ? followUps : undefined,
+        }])
       }
     } catch {
       // Mock fallback when API is unavailable
       if (!isContext) {
         const mock = mockAIResponse(message, occasion)
-        setMsgs(m => [...m, { role: 'assistant', content: mock.reply, products: mock.products.length > 0 ? mock.products : undefined }])
+        setMsgs(m => [...m, {
+          role: 'assistant',
+          content: mock.reply,
+          products: mock.products.length > 0 ? mock.products : undefined,
+          followUps: city
+            ? [`Show city-specific options for ${city}`, 'Make it more classic', 'Make it more bold']
+            : ['Share your city for local-style picks', 'Keep it under budget', 'Show one ethnic and one western look'],
+        }])
       }
     }
     setChatLoading(false)
     chatInputRef.current?.focus()
-  }, [sessionId, occasion])
+  }, [sessionId, occasion, city])
 
   const sendChat = useCallback(async (txt: string) => {
     if (!txt.trim() || chatLoading) return
@@ -482,8 +514,26 @@ export default function StylistPage() {
 
             {/* City */}
             <div style={{ marginBottom: '32px' }}>
-              <label style={lbl}>City (optional)</label>
-              <input style={inp} placeholder="e.g. Mumbai, Delhi, Jaipur..." value={city} onChange={e => setCity(e.target.value)} />
+              <label style={lbl}>City / Area (optional but recommended)</label>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input style={inp} placeholder="e.g. Jaipur C-Scheme, Delhi Vasant Kunj..." value={city} onChange={e => setCity(e.target.value)} />
+                <VoiceInput onTranscription={setCity} isChatLoading={false} />
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
+                {['Jaipur', 'Delhi', 'Mumbai', 'Bengaluru'].map((cityChip) => (
+                  <button
+                    type="button"
+                    key={cityChip}
+                    onClick={() => setCity(cityChip)}
+                    style={{
+                      padding: '5px 12px', border: `1px solid ${T.border}`, background: T.bg,
+                      color: T.textMuted, fontSize: '11px', cursor: 'pointer'
+                    }}
+                  >
+                    {cityChip}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Vibe Sliders */}
@@ -721,6 +771,24 @@ export default function StylistPage() {
                       ))}
                     </div>
                   )}
+
+                  {m.role === 'assistant' && m.followUps && m.followUps.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px', maxWidth: '85%' }}>
+                      {m.followUps.map((prompt, promptIndex) => (
+                        <button
+                          type="button"
+                          key={`${prompt}-${promptIndex}`}
+                          onClick={() => sendChat(prompt)}
+                          style={{
+                            padding: '6px 12px', border: `1px solid ${T.border}`, background: T.bg,
+                            color: T.textMuted, fontSize: '11px', cursor: 'pointer', textAlign: 'left'
+                          }}
+                        >
+                          {prompt}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
               {chatLoading && (
@@ -739,10 +807,10 @@ export default function StylistPage() {
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '24px' }}>
               <input ref={chatInputRef} value={chatInput} onChange={e => setChatInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && sendChat(chatInput)}
-                placeholder="Tell me about the look you want..."
+                placeholder="Tell me your vibe, city/area, and event..."
                 disabled={chatLoading}
                 style={{ ...inp, flex: 1, borderColor: T.border }} />
-              <VoiceInput onTranscription={(txt) => sendChat(txt)} isChatLoading={chatLoading} />
+              <VoiceInput onTranscription={setChatInput} isChatLoading={chatLoading} />
               <button type="button" onClick={() => sendChat(chatInput)} disabled={chatLoading || !chatInput.trim()}
                 style={{ padding: '12px 20px', background: T.accent, color: T.white, border: 'none', fontSize: '14px', cursor: (chatLoading || !chatInput.trim()) ? 'not-allowed' : 'pointer', opacity: (chatLoading || !chatInput.trim()) ? 0.4 : 1 }}>
                 {'\u2192'}

@@ -4,7 +4,6 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 const BRAND_COPPER = '#a17a58'
-const BRAND_INK = '#1a1410'
 
 export default function DigitalStylistSection() {
     const [activeTab, setActiveTab] = useState<'style' | 'make'>('style')
@@ -32,7 +31,7 @@ export default function DigitalStylistSection() {
                             ].map((item) => (
                                 <button
                                     key={item.id}
-                                    onClick={() => setActiveTab(item.id as any)}
+                                    onClick={() => setActiveTab(item.id as 'style' | 'make')}
                                     className={`text-left p-6 transition-all duration-300 border-l-2 ${activeTab === item.id ? 'bg-white border-[#a17a58] shadow-sm' : 'border-transparent hover:border-[#a17a58]/30'}`}
                                 >
                                     <div className={`font-mono text-[10px] tracking-widest uppercase mb-1 ${activeTab === item.id ? 'text-[#a17a58]' : 'text-[#999]'}`}>

@@ -1,4 +1,3 @@
-import Head from 'next/head'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import AIWidget from '@/components/widget/AIWidget'
@@ -22,7 +21,7 @@ export default function AIStylistPage() {
                         Your Personal AI Stylist
                     </h2>
                     <p className="font-sans text-[#5c5046] text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
-                        Whether you need expert advice on assembling the perfect sangeet look, or want to generate a visual mockup of a bespoke sherwani you've imagined, Ayaan is here to assist.
+                        Whether you need expert advice on assembling the perfect sangeet look, or want to generate a visual mockup of a bespoke sherwani you&apos;ve imagined, Ayaan is here to assist.
                     </p>
                 </div>
 

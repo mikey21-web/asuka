@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import VoiceInput from './VoiceInput'
 
 const BRANDS = ['Zara', 'H&M', 'Mango', 'Raymond', 'Peter England', 'Allen Solly', 'Van Heusen', 'Louis Philippe', 'Arrow', 'Blackberrys', 'Zodiac', 'Jack & Jones', 'Other']
@@ -8,6 +8,15 @@ const FIT_PREFS = ['Slim Tailored', 'Regular/Classic', 'Relaxed']
 const BODY_SHAPES = ['Athletic', 'Lean', 'Broad Chest', 'Belly', 'Broad Shoulders']
 const ISSUES_LIST = ['Sleeves too long', 'Waist too tight', 'Tight on chest', 'Shoulder drops', 'Hip tight']
 const PRODUCT_TYPES = ['Shirt', 'Trousers', 'Suit', 'Blazer', 'Kurta', 'Bundi', 'Sherwani']
+const BASE_SIZES = ['S', 'M', 'L', 'XL', 'XXL', '38', '40', '42', '44']
+
+interface SizerResult {
+  asuka_size?: string
+  size?: string
+  alternative?: string
+  confidence?: string
+  reasoning?: string
+}
 
 export default function ProductSizerModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   const [step, setStep] = useState(1)
@@ -21,10 +30,22 @@ export default function ProductSizerModal({ isOpen, onClose }: { isOpen: boolean
   const [shape, setShape] = useState('Athletic')
   const [issues, setIssues] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<SizerResult | null>(null)
+  const [customSize, setCustomSize] = useState('')
 
   /* State for photos */
   const [photos, setPhotos] = useState<(File | null)[]>([null, null])
+  const [previewUrls, setPreviewUrls] = useState<string[]>(['', ''])
+
+  useEffect(() => {
+    const next = photos.map((file) => (file ? URL.createObjectURL(file) : ''))
+    setPreviewUrls(next)
+    return () => {
+      next.forEach((url) => {
+        if (url) URL.revokeObjectURL(url)
+      })
+    }
+  }, [photos])
 
   if (!isOpen) return null
 
@@ -119,9 +140,24 @@ export default function ProductSizerModal({ isOpen, onClose }: { isOpen: boolean
 
               <div>
                 <label style={LabelStyle}>Size in that brand</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 items-center mb-2">
+                  <select style={{ ...InputStyle, marginBottom: 0, cursor: 'pointer' }} value={size} onChange={e => setSize(e.target.value)}>
+                    <option value="">Select base size</option>
+                    {BASE_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <input
+                    style={{ ...InputStyle, marginBottom: 0 }}
+                    value={customSize}
+                    onChange={e => {
+                      setCustomSize(e.target.value)
+                      setSize(e.target.value)
+                    }}
+                    placeholder="Or custom (15.5 collar)"
+                  />
+                </div>
                 <div className="flex gap-2 items-center mb-4">
-                  <input style={{ ...InputStyle, marginBottom: 0 }} value={size} onChange={e => setSize(e.target.value)} placeholder="e.g., M, 40, 32, 15.5 collar" />
                   <VoiceInput onTranscription={setSize} isChatLoading={loading} />
+                  <span className="text-[10px] text-[#777]">Voice works too</span>
                 </div>
               </div>
 
@@ -195,8 +231,9 @@ export default function ProductSizerModal({ isOpen, onClose }: { isOpen: boolean
                         const input = document.createElement('input');
                         input.type = 'file';
                         input.accept = 'image/*';
-                        input.onchange = (e: any) => {
-                          const file = e.target.files?.[0];
+                        input.onchange = (e) => {
+                          const target = e.target as HTMLInputElement
+                          const file = target.files?.[0]
                           if (file) {
                             const newPhotos = [...photos];
                             newPhotos[i] = file;
@@ -224,7 +261,7 @@ export default function ProductSizerModal({ isOpen, onClose }: { isOpen: boolean
                       {photos[i] ? (
                         <>
                           <img
-                            src={URL.createObjectURL(photos[i] as File)}
+                            src={previewUrls[i]}
                             alt="preview"
                             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5 }}
                           />

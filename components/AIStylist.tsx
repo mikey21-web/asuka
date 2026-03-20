@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { searchProducts, getAllProducts, type CatalogProduct } from '@/lib/catalog'
+import { type CatalogProduct } from '@/lib/catalog'
 import { formatPrice } from '@/lib/site-data'
 import Link from 'next/link'
 
@@ -15,10 +15,15 @@ interface Message {
     products?: CatalogProduct[]
 }
 
+const WELCOME_MESSAGE: Message = {
+    role: 'assistant',
+    text: "Namaste! ✨ I'm Ayaan, your personal stylist. What occasion are we planning for today?"
+}
+
 export default function AIStylist() {
     const [isOpen, setIsOpen] = useState(false)
     const [messages, setMessages] = useState<Message[]>([
-        { role: 'assistant', text: "Namaste! ✨ I'm Ayaan, your personal stylist. What occasion are we planning for today?" }
+        WELCOME_MESSAGE
     ])
     const [inputValue, setInputValue] = useState('')
     const [isListening, setIsListening] = useState(false)
@@ -28,23 +33,13 @@ export default function AIStylist() {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     }, [messages])
 
-    /* Greeting + casual chat patterns */
-    const GREETINGS = ['hi', 'hey', 'hello', 'hii', 'hiii', 'yo', 'sup', 'namaste', 'salam']
-    const GREETING_REPLIES = [
-        "Hey there! 👋 Welcome to Asuka Couture. What's the occasion you're dressing for? Wedding, party, festive, or something casual?",
-        "Namaste! ✨ I'm your personal stylist. Tell me — what look are you going for today?",
-        "Hi! Great to have you here. Are you shopping for a special event or everyday luxury?",
-    ]
-    const FALLBACKS = [
-        "I'd love to help! Try telling me:\n• An occasion — \"sangeet outfit\"\n• A style — \"navy bandhgala\"\n• A fabric — \"linen casual suit\"",
-        "Hmm, let me help you narrow it down. What's the event? Wedding, party, office, or festive?",
-        "No worries! Just describe what you're looking for — color, occasion, or vibe — and I'll find the perfect piece.",
-        "Tell me more! For example: \"I need an outfit for a reception\" or \"show me kurta sets under 20k\".",
-    ]
-    let fallbackIdx = 0
-
     const [loading, setLoading] = useState(false)
     const [sessionId] = useState(() => `stylist_${Math.random().toString(36).slice(2, 9)}`)
+
+    function resetChat() {
+        setMessages([WELCOME_MESSAGE])
+        setInputValue('')
+    }
 
     async function handleSend() {
         if (!inputValue.trim() || loading) return
@@ -67,7 +62,7 @@ export default function AIStylist() {
             if (data.products_mentioned && data.products_mentioned.length > 0) {
                 setMessages(prev => [...prev, { role: 'assistant', text: '', type: 'product', products: data.products_mentioned }])
             }
-        } catch (err) {
+        } catch {
             setMessages(prev => [...prev, { role: 'assistant', text: "Maafi (Sorry), I had a momentary connection slip. Tell me again?" }])
         }
         setLoading(false)
@@ -75,12 +70,25 @@ export default function AIStylist() {
 
     function startVoice() {
         if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) return
-        const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition
-        const recognition = new SpeechRecognition()
+        type RecognitionCtor = new () => {
+            lang: string
+            interimResults: boolean
+            onstart: (() => void) | null
+            onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null
+            onerror: (() => void) | null
+            onend: (() => void) | null
+            start: () => void
+        }
+        const recognitionCtor =
+            ((window as Window & { webkitSpeechRecognition?: RecognitionCtor }).webkitSpeechRecognition) ||
+            ((window as Window & { SpeechRecognition?: RecognitionCtor }).SpeechRecognition)
+        if (!recognitionCtor) return
+
+        const recognition = new recognitionCtor()
         recognition.lang = 'en-IN'
         recognition.interimResults = false
         recognition.onstart = () => setIsListening(true)
-        recognition.onresult = (event: any) => {
+        recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript
             setInputValue(transcript)
             setIsListening(false)
@@ -119,7 +127,16 @@ export default function AIStylist() {
                             <h3 style={{ fontFamily: 'var(--font-sans)', fontSize: '15px', fontWeight: 500, color: 'white', margin: 0, letterSpacing: '2px' }}>AI STYLIST</h3>
                             <p style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: BRAND_COPPER, margin: '4px 0 0', letterSpacing: '1px' }}>ASUKA COUTURE</p>
                         </div>
-                        <button type="button" onClick={() => setIsOpen(false)} style={{ background: 'none', border: 'none', color: 'white', fontSize: '22px', cursor: 'pointer' }}>×</button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <button
+                                type="button"
+                                onClick={resetChat}
+                                style={{ background: 'none', border: '1px solid rgba(255,255,255,0.35)', color: 'white', fontSize: '10px', letterSpacing: '1px', cursor: 'pointer', padding: '6px 10px', textTransform: 'uppercase' }}
+                            >
+                                Reset
+                            </button>
+                            <button type="button" onClick={() => setIsOpen(false)} style={{ background: 'none', border: 'none', color: 'white', fontSize: '22px', cursor: 'pointer' }}>×</button>
+                        </div>
                     </div>
 
                     {/* Messages */}
