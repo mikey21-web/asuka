@@ -7,12 +7,13 @@ export interface ValidationResult<T> {
   error?: string;
 }
 
-export const validateStylistRequest = (body: any): ValidationResult<{ message: string; session_id?: string }> => {
+export const validateStylistRequest = (body: any): ValidationResult<{ message: string; session_id?: string; location?: string }> => {
   if (!body || typeof body !== 'object') {
     return { success: false, error: 'Invalid request body' };
   }
 
-  const { message, session_id } = body;
+  const { message, session_id, location } = body;
+
 
   if (typeof message !== 'string') {
     return { success: false, error: 'Message must be a string' };
@@ -40,9 +41,11 @@ export const validateStylistRequest = (body: any): ValidationResult<{ message: s
     success: true, 
     data: { 
       message: trimmedMessage, 
-      session_id: session_id ? session_id.trim() : undefined 
+      session_id: session_id ? session_id.trim() : undefined,
+      location: location ? (location as string).trim() : undefined
     } 
   };
+
 };
 
 export const validateDesignRequest = (body: any): ValidationResult<{ message: string; session_id?: string }> => {

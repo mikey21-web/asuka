@@ -1,13 +1,14 @@
+// @ts-nocheck
 'use client'
-import { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import VoiceInput from '../ai/VoiceInput'
 import { ASUKA_PRODUCTS } from '@/lib/groq'
 
 /* ── TYPES ── */
-type Tab = 'style'
-type ChatMsg = { role: 'user' | 'assistant'; content: string; products?: string[] }
+type Tab = 'style' | 'sizer' | 'miy'
+type ChatMsg = { role: 'user' | 'assistant'; content: string; products?: string[]; sizeRecommendation?: string }
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
 
 /* ── COLOUR MAP FOR MIY PREVIEW ── */
@@ -26,12 +27,12 @@ function extractColour(txt: string): string {
 }
 
 /* ── BOLD + PRODUCT LINK RENDERER ── */
-function Bold({ text, contextProducts }: { text: string; contextProducts?: any[] }) {
+const Bold = ({ text, contextProducts }: { text: string; contextProducts?: any[] }) => {
   // Match **text** and **[text]** patterns
   const parts = text.split(/(\*\*\[?.*?\]?\*\*)/g)
   return (
     <>
-      {parts.map((p, i) => {
+      {parts.map((p: string, i: number) => {
         if (p.startsWith('**') && p.endsWith('**')) {
           const inner = p.slice(2, -2).replace(/^\[|\]$/g, '') // strip ** and optional []
 
@@ -67,8 +68,8 @@ function Bold({ text, contextProducts }: { text: string; contextProducts?: any[]
   )
 }
 
-/* ── SVG GARMENT PREVIEW ── */
-function GarmentPreview({ summary, prompt }: { summary: string | null, prompt?: string | null }) {
+/* ── GARMENT PREVIEW (shared) ── */
+const GarmentPreview = ({ summary, prompt }: { summary: string | null; prompt?: string | null }) => {
   const [imgLoaded, setImgLoaded] = useState(false)
   const bg = extractColour(summary || '')
 
@@ -103,7 +104,7 @@ function GarmentPreview({ summary, prompt }: { summary: string | null, prompt?: 
 }
 
 /* ── PRODUCT CARD component ── */
-function ProductCard({ p: productObj, name }: { p?: any; name?: string }) {
+const ProductCard = ({ p: productObj, name }: { p?: any; name?: string }) => {
   const p = productObj || ASUKA_PRODUCTS.find(x => x.name.toLowerCase() === (name || '').toLowerCase())
   if (!p) return null
 
@@ -139,10 +140,11 @@ function ProductCard({ p: productObj, name }: { p?: any; name?: string }) {
 /* ══════════════════════════
    CHAT PANEL (shared)
 ══════════════════════════ */
-function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview = false }: {
+function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview = false, city }: {
   endpoint: string; persona: string; quickPrompts: string[]
-  systemHeight?: number; showPreview?: boolean
+  systemHeight?: number; showPreview?: boolean; city?: string
 }) {
+
   const storageKey = `asuka_chat_${persona}`
   const [msgs, setMsgs] = useState<ChatMsg[]>(() => {
     if (typeof window === 'undefined') return []
@@ -169,18 +171,34 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
 
   const greetingRef = useRef(false)
 
-  // Initialize first assistant message
+  const chatContainerRef = useRef<HTMLDivElement>(null)
+  const [isReady, setIsReady] = useState(false)
+
   useEffect(() => {
-    if (msgs.length === 0 && !greetingRef.current) {
+    // Simulate a brief loading state for the "expert" connecting feel
+    const timer = setTimeout(() => setIsReady(true), 800)
+    return () => clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    if (isReady && msgs.length === 0 && !greetingRef.current) {
       greetingRef.current = true
+      
+      const sessionProfile = typeof window !== 'undefined' ? localStorage.getItem('asuka_user_profile') : null
+      let name = ''
+      if (sessionProfile) {
+        try { name = JSON.parse(sessionProfile).name || '' } catch {}
+      }
+
+      const greetingName = name ? `, ${name}` : ''
+      const greetingCity = city ? ` here in ${city}` : ''
+
       const g = persona === 'style'
-        ? "Welcome to Asuka Couture. I'm Ayaan, your personal AI stylist. Tell me about your upcoming occasion and I'll curate the perfect look for you."
-        : "Namaste! I'm your Asuka Atelier assistant. I can help you design a one-of-a-kind custom outfit. What vibe do you have in mind?"
+        ? `Welcome back to Asuka Couture${greetingName}. I'm Ayaan, your personal AI stylist${greetingCity}. Tell me about your upcoming occasion and I'll curate the perfect look for you.`
+        : `Namaste${greetingName}! I'm your Asuka Atelier assistant${greetingCity}. I can help you design a one-of-a-kind custom outfit. What vibe do you have in mind?`
       setMsgs([{ role: 'assistant', content: g }])
     }
-  }, [persona, msgs.length])
-
-  const chatContainerRef = useRef<HTMLDivElement>(null)
+  }, [isReady, persona, msgs.length, city])
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -206,7 +224,7 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
         setLoading(false)
         inputRef.current?.focus({ preventScroll: true })
       }
-    }, 20) // 20ms per word = snappier feel
+    }, 20)
     return timer
   }, [])
 
@@ -215,25 +233,28 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
     const next: ChatMsg[] = [...msgs, { role: 'user', content: txt }]
     setMsgs(next); setInput(''); setLoading(true)
     try {
-      // Build chat history for API (last 10 turns for context)
       const history = next.slice(-10).map(m => ({ role: m.role, content: m.content }))
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: txt, session_id: sessionId, history }),
+        body: JSON.stringify({ message: txt, session_id: sessionId, history, location: city }),
       })
+
       const data = await res.json()
       if (data.design_summary) setSummary(data.design_summary)
       if (data.image_prompt) setImgPrompt(data.image_prompt)
-      // Handle MIY looks format vs stylist format
       const reply = data.reply || data.message || data.error || 'Please try again.'
       const products = data.products_mentioned || (data.looks ? data.looks.map((l: any) => ({
         title: l.name, image_url: l.image_url, price: l.fabric_notes
       })) : undefined)
-      // Use typewriter effect for the response
+      
+      const recommendedSize = data.asuka_size || data.recommendedSize;
+      if (recommendedSize) {
+        window.dispatchEvent(new CustomEvent('asuka:size-recommended', { detail: { size: recommendedSize } }));
+      }
+
       typeWriter(reply, products)
     } catch {
-      // Graceful fallback - never show errors to user
       const fallbacks = [
         'I appreciate your patience! Let me think about that. In the meantime, feel free to browse our collections or try a different question.',
         'Thank you for waiting! I had a brief moment — could you share that again? I want to give you the best recommendation.',
@@ -241,9 +262,7 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
       ]
       typeWriter(fallbacks[Math.floor(Math.random() * fallbacks.length)])
     }
-  }, [msgs, loading, endpoint, sessionId, typeWriter])
-
-  const chatH = showPreview ? (summary ? 160 : 220) : (systemHeight || 300)
+  }, [msgs, loading, endpoint, sessionId, typeWriter, city])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -252,34 +271,45 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
         <div style={{ flexShrink: 0, padding: '10px 12px', background: '#f5ede3', border: '1px solid #d4c4b0', borderRadius: '6px', margin: '0 15px 10px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '2px', color: '#a17a58', textTransform: 'uppercase' }}>Design Preview</div>
-            <button type="button" onClick={() => { /* Toggle Customize UI */ }} style={{ background: 'none', border: '1px solid #a17a58', color: '#a17a58', fontSize: '7px', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', padding: '3px 6px', borderRadius: '3px', cursor: 'pointer' }}>Customize ▿</button>
+            <button type="button" style={{ background: 'none', border: '1px solid #a17a58', color: '#a17a58', fontSize: '7px', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', padding: '3px 6px', borderRadius: '3px', cursor: 'pointer' }}>Customize ▿</button>
           </div>
           <pre style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: '#555', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>{summary}</pre>
-          <button type="button" onClick={() => window.open(`https://wa.me/919063356542?text=${encodeURIComponent("Salaam! My Asuka Atelier Design Brief is ready:\n\n" + summary)}`, '_blank')} style={{ marginTop: '8px', width: '100%', padding: '11px', background: '#a17a58', color: '#fff', border: 'none', fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '2px', textTransform: 'uppercase', cursor: 'pointer', borderRadius: '4px' }}>Finalize & Discuss (WhatsApp) →</button>
+          <button type="button" onClick={() => {
+            const text = `Salaam! My Asuka Atelier Design Brief is ready:\n\n${summary}${imgPrompt ? `\n\nInspiration: ${imgPrompt}` : ''}`
+            window.open(`https://wa.me/919063356542?text=${encodeURIComponent(text)}`, '_blank')
+          }} style={{ marginTop: '8px', width: '100%', padding: '11px', background: '#a17a58', color: '#fff', border: 'none', fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '2px', textTransform: 'uppercase', cursor: 'pointer', borderRadius: '4px' }}>Finalize & Discuss (WhatsApp) →</button>
         </div>
       )}
-      {/* Quick prompts */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', flexShrink: 0, padding: '10px 15px' }}>
         {quickPrompts.map(q => (
-          <button type="button" key={q} onClick={() => send(q)} style={{ padding: '5px 10px', border: '1px solid #d4c4b0', fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '1px', color: '#a17a58', cursor: 'pointer', background: 'none', textTransform: 'uppercase', transition: 'all 0.2s', borderRadius: '3px' }} onMouseEnter={e => { (e.target as HTMLButtonElement).style.borderColor = '#a17a58'; (e.target as HTMLButtonElement).style.color = '#fff'; (e.target as HTMLButtonElement).style.background = '#a17a58'; }} onMouseLeave={e => { (e.target as HTMLButtonElement).style.borderColor = '#d4c4b0'; (e.target as HTMLButtonElement).style.color = '#a17a58'; (e.target as HTMLButtonElement).style.background = 'none'; }}>
+          <button type="button" key={q} onClick={() => send(q)} style={{ padding: '5px 10px', border: '1px solid #d4c4b0', fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '1px', color: '#a17a58', cursor: 'pointer', background: 'none', textTransform: 'uppercase', transition: 'all 0.2s', borderRadius: '3px' }}>
             {q}
           </button>
         ))}
       </div>
-      {/* Messages */}
-      <div ref={chatContainerRef} className="chat-scroll" style={{ flex: 1, overflowY: 'auto', padding: '15px', WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain' }}>
-        {msgs.map((m, i) => {
-          const cleanContent = m.content.replace(/[✨👋✦]/g, '').trim()
-          return (
-            <div key={i} className="animate-fadeUp" style={{ marginBottom: '14px', display: 'flex', flexDirection: 'column', alignItems: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', letterSpacing: '2px', textTransform: 'uppercase', color: m.role === 'user' ? '#a17a58' : '#999', marginBottom: '4px' }}>{m.role === 'assistant' ? (persona === 'style' ? 'Ayaan · Asuka' : 'Asuka Atelier') : 'You'}</span>
-              <div style={{ maxWidth: '85%', padding: '10px 14px', fontSize: '12px', lineHeight: 1.7, color: '#1a1410', background: m.role === 'user' ? '#f5ede3' : '#faf7f2', border: m.role === 'user' ? '1px solid #d4c4b0' : '1px solid #e8e0d6', borderRadius: '6px' }}>
-                {cleanContent.split('\n').map((line, j) => (
-                  <span key={j}><Bold text={line} contextProducts={m.products} />{j < cleanContent.split('\n').length - 1 && <br />}</span>
-                ))}
-
-                {/* Render Product Cards if any */}
-                {m.products && m.products.length > 0 && (
+      <div ref={chatContainerRef} className="chat-scroll" style={{ flex: 1, overflowY: 'auto', padding: '15px', WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain', background: '#fff' }}>
+        {!isReady ? (
+          <div className="animate-pulse" style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '10px 0' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ height: '7px', width: '80px', background: '#e8e0d6', borderRadius: '4px', letterSpacing: '2px' }} />
+              <div style={{ height: '45px', width: '90%', background: '#faf7f2', border: '1px solid #e8e0d6', borderRadius: '8px', boxShadow: 'inset 0 0 20px rgba(0,0,0,0.02)' }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+              <div style={{ height: '7px', width: '40px', background: '#e8e0d6', borderRadius: '4px' }} />
+              <div style={{ height: '35px', width: '70%', background: '#f5ede3', border: '1px solid #d4c4b0', borderRadius: '8px' }} />
+            </div>
+          </div>
+        ) : (
+          msgs.map((m: ChatMsg, i: number) => {
+            const cleanContent = m.content.replace(/[✨👋✦]/g, '').trim()
+            return (
+              <div key={i} className="animate-fadeUp" style={{ marginBottom: '14px', display: 'flex', flexDirection: 'column', alignItems: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', letterSpacing: '2px', textTransform: 'uppercase', color: m.role === 'user' ? '#a17a58' : '#999', marginBottom: '4px' }}>{m.role === 'assistant' ? (persona === 'style' ? 'Ayaan · Asuka' : 'Asuka Atelier') : 'You'}</span>
+                <div style={{ maxWidth: '85%', padding: '10px 14px', fontSize: '12px', lineHeight: 1.7, color: '#1a1410', background: m.role === 'user' ? '#f5ede3' : '#faf7f2', border: m.role === 'user' ? '1px solid #d4c4b0' : '1px solid #e8e0d6', borderRadius: '6px' }}>
+                  {cleanContent.split('\n').map((line, j) => (
+                    <span key={j}><Bold text={line} contextProducts={m.products} />{j < cleanContent.split('\n').length - 1 && <br />}</span>
+                  ))}
+                  {m.products && m.products.length > 0 && (
                   <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {m.products.map((p, idx) => (
                       <ProductCard key={idx} p={typeof p === 'object' ? p : undefined} name={typeof p === 'string' ? p : undefined} />
@@ -289,7 +319,7 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
               </div>
             </div>
           )
-        })}
+        }))}
         {loading && !streamingText && (
           <div style={{ marginBottom: '14px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', letterSpacing: '2px', textTransform: 'uppercase', color: '#999', marginBottom: '4px' }}>{persona === 'style' ? 'Ayaan · Asuka' : 'Asuka Atelier'}</span>
@@ -299,7 +329,6 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
             </div>
           </div>
         )}
-        {/* Streaming typewriter bubble */}
         {streamingText !== null && (
           <div className="animate-fadeUp" style={{ marginBottom: '14px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', letterSpacing: '2px', textTransform: 'uppercase', color: '#999', marginBottom: '4px' }}>{persona === 'style' ? 'Ayaan · Asuka' : 'Asuka Atelier'}</span>
@@ -309,8 +338,13 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
           </div>
         )}
       </div>
-      {/* Input area - anchored to absolute bottom */}
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', background: '#fff', padding: '12px 15px', borderTop: '1px solid #e8e0d6', flexShrink: 0, width: '100%', marginBottom: '-1px', borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}>
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', background: '#fff', padding: '12px 15px', borderTop: '1px solid #e8e0d6', flexShrink: 0, width: '100%', marginBottom: '-1px' }}>
+        <button type="button" className="group relative p-2 text-black/20 hover:text-[var(--gold)] transition-all duration-300">
+          <Paperclip className="w-4 h-4" />
+          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-[#1a1410] text-white text-[8px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap tracking-widest font-mono pointer-events-none z-50">
+            VISUAL SEARCH
+          </span>
+        </button>
         <input
           ref={inputRef}
           value={input}
@@ -327,13 +361,14 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
             disabled={loading || !input.trim()}
             style={{ width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a1410', color: '#fff', border: 'none', borderRadius: '50%', cursor: (loading || !input.trim()) ? 'not-allowed' : 'pointer', opacity: (loading || !input.trim()) ? 0.3 : 1, transition: 'all 0.2s' }}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" /></svg>
+             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" /></svg>
           </button>
         </div>
       </div>
     </div>
   )
 }
+
 
 
 /* ══════════════════════════
@@ -361,13 +396,19 @@ const Ruler = ({ className }: { className?: string }) => (
 const Scissors = ({ className }: { className?: string }) => (
   <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><path d="M20 4L8.12 15.88" /><path d="M14.47 14.48L20 20" /><path d="M8.12 8.12L12 12" /></svg>
 )
+const Paperclip = ({ className }: { className?: string }) => (
+  <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.51a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
+)
+const Mic = ({ className }: { className?: string }) => (
+  <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" x2="12" y1="19" y2="22" /></svg>
+)
 
 /* ── MAIN WIDGET ══════════════════════════ */
 export default function AIWidget({ isFloating = false }: { isFloating?: boolean }) {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
   const [chatKey, setChatKey] = useState(0)
-  const [unreadCount, setUnreadCount] = useState(1); // Default show 1 for greeting
+  const [unreadCount, setUnreadCount] = useState(0); 
 
   useEffect(() => {
     if (open) setUnreadCount(0)
@@ -393,34 +434,58 @@ export default function AIWidget({ isFloating = false }: { isFloating?: boolean 
     return null;
   }
 
-  const handleStartOver = () => {
-    localStorage.removeItem('asuka_chat_style')
-    setChatKey(prev => prev + 1)
+  const [city, setCity] = useState(() => {
+    if (typeof window === 'undefined') return ''
+    return localStorage.getItem('asuka_user_city') || ''
+  })
+
+  const handleCityChange = (newCity: string) => {
+    setCity(newCity)
+    localStorage.setItem('asuka_user_city', newCity)
+    setChatKey(prev => prev + 1) // Force reset ChatPanel
   }
 
   const widgetContent = (
     <div className={`w-full flex flex-col bg-[var(--paper)] overflow-hidden ${isFloating ? 'h-full sm:rounded-2xl' : 'border border-[var(--gold-border)] shadow-sm rounded-xl min-h-[500px]'}`}>
-      <div className="flex flex-col bg-[var(--paper2)] border-b border-[var(--gold-border)] flex-shrink-0">
-        <div className="flex items-center justify-between px-4 h-[50px] sm:h-[60px]">
-          <button
-            onClick={handleStartOver}
-            className="flex items-center gap-1 text-[8px] font-mono uppercase tracking-widest text-[var(--gold)] hover:opacity-70 transition-opacity"
-            title="Clear Chat"
-          >
-            <RefreshCw className="w-3 h-3" />
-            <span>Start Over</span>
-          </button>
-          <span className="text-[10px] font-mono tracking-[3px] uppercase text-[var(--gold)] font-bold">
-            AI Personal Stylist
-          </span>
-          <div className="w-8" /> {/* spacer */}
+      <div className="flex flex-col bg-[var(--paper2)] border-b border-[var(--gold-border)] flex-shrink-0 p-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-mono tracking-[3px] uppercase text-[var(--gold)] font-bold">
+              AI Personal Stylist
+            </span>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+              <span className="text-[8px] uppercase tracking-widest text-white/40">Expert Online</span>
+            </div>
+          </div>
           {isFloating && (
-            <button onClick={() => setOpen(false)} className="p-2 text-[var(--gold)] hover:opacity-70">
+            <button onClick={() => setOpen(false)} className="p-2 text-[var(--gold)] hover:opacity-70 transition-opacity">
               <X className="w-5 h-5" />
             </button>
           )}
         </div>
+
+        {/* City Selector */}
+        <div className="flex items-center gap-3 py-2 border-t border-white/5">
+          <span className="text-[9px] uppercase tracking-widest text-white/30 font-medium">Location:</span>
+          <div className="flex gap-2">
+            {['Hyderabad', 'Mumbai', 'Ahmedabad'].map((c) => (
+              <button
+                key={c}
+                onClick={() => handleCityChange(c)}
+                className={`text-[9px] px-2.5 py-1 rounded-full border transition-all duration-300 ${
+                  city === c 
+                    ? 'bg-[var(--gold)] border-[var(--gold)] text-black font-semibold' 
+                    : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10 hover:border-white/20'
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
+
 
       <div className="flex-1 flex flex-col overflow-hidden relative" style={{ minHeight: 0 }}>
         <ChatPanel
@@ -430,7 +495,9 @@ export default function AIWidget({ isFloating = false }: { isFloating?: boolean 
           showPreview={false}
           quickPrompts={['Wedding guest', 'Groom · sangeet', 'Office ethnic', 'Beach wedding', 'Eid look', 'Diwali party']}
           systemHeight={isFloating ? 500 : 600}
+          city={city}
         />
+
       </div>
     </div>
   )

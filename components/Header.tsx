@@ -1,5 +1,6 @@
 'use client'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 
@@ -160,7 +161,14 @@ export default function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 no-underline">
             {/* Lotus Mark */}
-            <img src="https://asukacouture.com/cdn/shop/files/Untitled_design_70x.png" alt="Asuka" className={`h-[28px] ${(isWestern || isEthnic) ? 'brightness-100 invert' : ''}`} />
+            <Image 
+              src="https://asukacouture.com/cdn/shop/files/Untitled_design_70x.png" 
+              alt="Asuka" 
+              width={28} 
+              height={28} 
+              className={`h-[28px] w-auto ${(isWestern || isEthnic) ? 'brightness-100 invert' : ''}`} 
+              priority
+            />
             <span className="font-serif text-[22px] tracking-[5px] font-light uppercase text-current hidden sm:inline">ASUKĀ</span>
           </Link>
 

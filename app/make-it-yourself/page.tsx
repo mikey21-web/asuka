@@ -28,6 +28,7 @@ export default function MakeItYourself() {
     const [colors, setColors] = useState('Navy, Emerald')
     const [avoidColors, setAvoidColors] = useState('Yellow')
     const [budget, setBudget] = useState('₹50k - ₹1L')
+    const [eventDate, setEventDate] = useState('')
 
     // Step 2: Personal Inputs
     const [height, setHeight] = useState('')
@@ -185,6 +186,19 @@ Please provide a detailed design summary and an image prompt for this specific v
                     concept: look.name
                 })
             });
+
+            // Phase 2.4: Set automated reminder if date exists
+            if (eventDate) {
+                await fetch('/api/reminders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contact: clientContact,
+                        occasion: occasion,
+                        eventDate: eventDate
+                    })
+                });
+            }
         } catch (e) {
             console.warn("Lead archiving failed, continuing with visualization...");
         }
@@ -247,7 +261,8 @@ CLIENT: ${clientName} (${clientContact})
 COLLECTION: Make It Yourself Atelier
 ---------------------------------------------
 CLIENT REQUEST: ${occasion} for ${city || 'Indoors'} location.
-VIBE: ${vibe < 40 ? 'Understated Heritage' : vibe > 60 ? 'Bold Statement' : 'Contemporary Classic'}
+EVENT DATE: ${eventDate || 'TBD'}
+VIBE: ${vibe < 40 ? 'Understated Heritage' : vibe > 140 ? 'Bold Statement' : 'Contemporary Classic'}
 BUDGETARY SCOPE: ${budget}
 PALETTE: ${colors} (Excluding: ${avoidColors})
 
@@ -319,6 +334,16 @@ Please assign a Master Draper to finalize this commission.`
                                                 <label className={labelClasses}>City</label>
                                                 <input className={inputClasses} placeholder="e.g. Jaipur" value={city} onChange={e => setCity(e.target.value)} />
                                             </div>
+                                        </div>
+                                        <div>
+                                            <label className={labelClasses}>Event Date (Optional)</label>
+                                            <input 
+                                                type="date" 
+                                                className={inputClasses} 
+                                                value={eventDate} 
+                                                onChange={e => setEventDate(e.target.value)} 
+                                                min={new Date().toISOString().split('T')[0]}
+                                            />
                                         </div>
                                         <div>
                                             <label className={labelClasses}>Time of Day</label>

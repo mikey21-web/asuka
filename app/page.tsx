@@ -32,7 +32,14 @@ export default function Home() {
             />
             {/* Top Logo */}
             <div className="absolute top-[40px] md:top-[60px] w-full flex justify-center z-10">
-              <img src="https://asukacouture.com/cdn/shop/files/Untitled_design_70x.png?v=1672665412" alt="Asuka Logo" className="w-[100px] md:w-[160px] brightness-0 invert drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
+              <Image 
+                src="https://asukacouture.com/cdn/shop/files/Untitled_design_70x.png?v=1672665412" 
+                alt="Asuka Logo" 
+                width={160} 
+                height={60} 
+                className="w-[100px] md:w-[160px] brightness-0 invert drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
+                priority
+              />
             </div>
             {/* Minimal gradient for text contrast only */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-80 pointer-events-none" />

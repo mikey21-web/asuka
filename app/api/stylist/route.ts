@@ -4,13 +4,13 @@ import { Groq } from 'groq-sdk'
 import { getProductsFromDB, type CatalogProduct } from '@/lib/catalog'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { validateStylistRequest } from '@/lib/validations'
+import { getProfile, updateProfile, extractProfileFromChat } from '@/lib/profile'
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY
 })
 
 // Store a simple in-memory chat history for demo purposes
-// In production, this should use a database (Redis/Postgres) keyed by session_id
 const CHAT_HISTORY: Record<string, any[]> = {}
 
 export async function POST(req: Request) {
@@ -45,9 +45,28 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: validation.error }, { status: 400, headers });
     }
 
-    const { message, session_id } = validation.data!;
-
+    const { message, session_id, location } = validation.data!;
     const sid = session_id || 'default_session'
+
+    // 3. Load User Profile
+    const userProfile = await getProfile(sid)
+    
+    // Hyper-local personality
+    const { getLocalContext } = await import('@/lib/groq');
+    const localContext = getLocalContext(location || userProfile?.city);
+
+    const profileContext = userProfile ? `
+    USER PROFILE:
+    - Name: ${userProfile.name || 'Unknown'}
+    - Preferred Size: ${userProfile.preferredSize || 'Unknown'}
+    - Preferred Fabrics: ${userProfile.preferredFabrics?.join(', ') || 'Unknown'}
+    - Past Occasions: ${userProfile.occasions?.join(', ') || 'Unknown'}
+    - Style Summary: ${userProfile.conversationSummary || 'New customer'}
+    - Detected Location: ${location || userProfile.city || 'Unknown'}
+    ${localContext}
+    ` : `USER PROFILE: New customer. Greet them warmly and learn their style. ${localContext}`
+
+
     if (!CHAT_HISTORY[sid]) {
       CHAT_HISTORY[sid] = []
     }
@@ -56,19 +75,8 @@ export async function POST(req: Request) {
     const allProducts = await getProductsFromDB()
 
     // ── STEP 1: DYNAMIC SEARCH ──
-    // Instead of simple keyword matching, we'll use a "Shortlist" approach.
-    const searchContext = [...(CHAT_HISTORY[sid] || []), { role: 'user', content: message }]
-      .map(m => m.content).join(' ').toLowerCase()
-
     const currentMsgLower = message.toLowerCase()
 
-    // Categorization logic for filtering
-    const CATEGORIES = {
-      ETHNIC: ['sherwani', 'kurta', 'bundi', 'angrakha', 'bandhgala', 'indowestern', 'stole', 'jutti'],
-      WESTERN: ['tuxedo', 'suit', 'jacket', 'shirt', 'blazer', 'pant', 'tie', 'safari', 'linen']
-    }
-
-    // Narrow down the catalog to ~200 relevant products to save tokens while keeping "sync"
     let shortlist = allProducts.map(p => {
       let score = 0
       const text = `${p.title} ${p.handle} ${p.description}`.toLowerCase()
@@ -78,20 +86,14 @@ export async function POST(req: Request) {
       if (currentMsgLower.includes('tuxedo')) score += text.includes('tuxedo') ? 100 : 0
       if (currentMsgLower.includes('haldi')) score += text.includes('yellow') || text.includes('kurta') ? 50 : 0
 
-      // Color Match
-      const colors = ['blue', 'black', 'white', 'ivory', 'gold', 'red', 'pink', 'green', 'grey', 'beige']
-      colors.forEach(c => { if (currentMsgLower.includes(c) && text.includes(c)) score += 30 })
-
-      // General relevance
-      const searchTerms = currentMsgLower.split(' ').filter((t: string) => t.length > 3)
-      searchTerms.forEach((t: string) => { if (text.includes(t)) score += 10 })
+      // Profile Matching
+      if (userProfile?.preferredFabrics?.some(f => text.includes(f.toLowerCase()))) score += 40
+      if (userProfile?.colorPreferences?.some(c => text.includes(c.toLowerCase()))) score += 40
 
       return { ...p, score }
     })
       .sort((a, b) => b.score - a.score)
-      .slice(0, 150) // Give the AI 150 products to choose from
-
-    const catalogString = shortlist.map(p => `${p.title}|${p.handle}|${p.price}`).join('\n')
+      .slice(0, 150)
 
     // ── STEP 2: BRAINY SYSTEM PROMPT ──
     const systemPrompt = `You are **Ayaan**, the distinguished Master Stylist at Asuka Couture. 
@@ -99,18 +101,20 @@ export async function POST(req: Request) {
     
     HERITAGE: Asuka Couture (est. 1991) is known for "Rituals of Fine Dressing". 
     We blend ancient Indian craftsmanship with modern silhouettes.
+
+    ${profileContext}
     
     YOUR PERSONALITY:
     - Sophisticated, polite, and authoritative. Use terms like "Sir", "Masterpiece", "Sartorial elegance".
-    - You understand human context: "Haldi" needs comfort and bright colors; "Cocktails" need sharp Tuxedos; "Sangeet" is for bold Indowesterns.
+    - If you know the user's name, greet them by name (e.g., "Good evening, Mr. Arjun").
+    - You understand human context: "Haldi" needs comfort and bright colors; "Cocktails" need sharp Tuxedos.
     
     YOUR BRAIN (Logic):
-    1. UNDERSTAND THE HUMAN: If the user says "I have a wedding", don't just dump products. Ask "Are you the Groom or a Guest?" or "Is it a day or night ceremony?".
+    1. PERSISTENCE: Acknowledge what you already know about them (e.g. "Since you preferred Linen for your last event...").
     2. SMART RECO: Choose only the TOP 3-5 products that perfectly fit the "vibe".
     3. INVENTORY AWARENESS: Only recommend products that are IN STOCK. 
        - If a product has <3 units left in a size, mention: "Only {X} pieces left in your size" to create urgency.
-    4. EXPLAIN THE WHY: For every product mentioned, explain WHY it fits (e.g., "The velvet trim on this Tuxedo adds the right amount of moonlight glow for a reception").
-    5. CATEGORY INTEGRITY: Western requests (Tuxedo/Suit) = Western products. Ethnic (Sherwani/Kurta) = Ethnic products.
+    4. EXPLAIN THE WHY: For every product mentioned, explain WHY it fits.
     
     RESPONSE FORMAT (JSON ONLY):
     {
@@ -133,7 +137,6 @@ export async function POST(req: Request) {
       { role: 'user', content: message }
     ]
 
-    // Use Llama 3.3 70B with local fetch fallback if needed
     const completion = await groq.chat.completions.create({
       messages: messages as any,
       model: 'llama-3.3-70b-versatile',
@@ -141,7 +144,6 @@ export async function POST(req: Request) {
       max_tokens: 800,
       response_format: { type: "json_object" }
     }).catch(async () => {
-       // Fallback to 8b instantly if 70b is overloaded
        return await groq.chat.completions.create({
          messages: messages as any,
          model: 'llama-3.1-8b-instant',
@@ -156,7 +158,7 @@ export async function POST(req: Request) {
     try {
       parsedResponse = JSON.parse(responseContent)
     } catch {
-      parsedResponse = { reply: "I apologize, Sir. My sartorial thoughts got slightly tangled. Could you rephrase your request?", products_mentioned: [] }
+      parsedResponse = { reply: "I apologize, Sir. My sartorial thoughts got slightly tangled.", products_mentioned: [] }
     }
 
     // Save to history
@@ -164,22 +166,37 @@ export async function POST(req: Request) {
     CHAT_HISTORY[sid].push({ role: 'assistant', content: JSON.stringify(parsedResponse) })
     if (CHAT_HISTORY[sid].length > 10) CHAT_HISTORY[sid] = CHAT_HISTORY[sid].slice(-10)
 
-    // Map back to full product details (images, etc)
+    // ── STEP 4: BACKGROUND PROFILE UPDATE ──
+    // In a real serverless env, this might need to be awaited or handled via a queue
+    (async () => {
+      const extracted = await extractProfileFromChat(CHAT_HISTORY[sid])
+      if (Object.keys(extracted).length > 0) {
+        await updateProfile(sid, extracted)
+      }
+    })().catch(console.error)
+
+    // ── STEP 5: MAPPING & COMPLEMENTARY ──
     const finalProducts = (parsedResponse.products_mentioned || []).map((p: any) => {
       const fullProd = allProducts.find(f => f.handle === p.handle || f.title === p.title)
       if (fullProd) {
-        return {
-          ...fullProd,
-          recommendation_reason: p.reason
-        }
+        return { ...fullProd, recommendation_reason: p.reason }
       }
       return null
     }).filter(Boolean)
 
+    const { getCompleteLook } = await import('@/lib/styling-graph');
+    let complementaryProducts: any[] = [];
+    if (finalProducts.length > 0) {
+      const topProduct = finalProducts[0] as any;
+      complementaryProducts = await getCompleteLook(topProduct.handle);
+    }
+
     return NextResponse.json({
       reply: parsedResponse.reply,
-      products_mentioned: finalProducts
+      products_mentioned: finalProducts,
+      complementary: complementaryProducts
     }, { headers })
+
 
   } catch (error) {
     console.error('Stylist API Error:', error)

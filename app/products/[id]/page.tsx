@@ -22,6 +22,23 @@ export default function ProductPage() {
     const [selectedSize, setSelectedSize] = useState('XS')
     const [mainImgIdx, setMainImgIdx] = useState(0)
     const [sizerOpen, setSizerOpen] = useState(false)
+    const [aiRecommendedSize, setAiRecommendedSize] = useState<string | null>(null)
+
+    // Phase 2.3: Listen for AI Sizer recommendations
+    useEffect(() => {
+        const handleSizeRec = (e: any) => {
+            const size = e.detail?.size;
+            if (size && SIZES.includes(size.toUpperCase())) {
+                const upperSize = size.toUpperCase();
+                setSelectedSize(upperSize);
+                setAiRecommendedSize(upperSize);
+                // Scroll to size selector if needed
+                console.log('AI Recommended Size Received:', upperSize);
+            }
+        };
+        window.addEventListener('asuka:size-recommended', handleSizeRec);
+        return () => window.removeEventListener('asuka:size-recommended', handleSizeRec);
+    }, []);
 
     // Category detection: shirts, co-ord, tuxedo, suits, jackets = Western
     const isWestern = handle.includes('shirt') || handle.includes('suit') || handle.includes('jacket') || handle.includes('tuxedo') || handle.includes('co-ord') || handle.includes('western')
@@ -110,15 +127,23 @@ export default function ProductPage() {
                             </div>
 
                             <div className="flex flex-wrap gap-2 mb-8">
-                                {SIZES.map(s => (
-                                    <button
-                                        key={s}
-                                        onClick={() => setSelectedSize(s)}
-                                        className={`w-11 h-11 flex items-center justify-center text-[12px] border font-mono transition-all duration-300 ${selectedSize === s ? (isWestern ? 'border-[#008b8b] bg-[#008b8b] text-white' : 'border-black bg-black text-white') : 'border-[#ccc] hover:border-black'}`}
-                                    >
-                                        {s}
-                                    </button>
-                                ))}
+                                {SIZES.map(s => {
+                                    const isRecommended = aiRecommendedSize === s;
+                                    return (
+                                        <button
+                                            key={s}
+                                            onClick={() => setSelectedSize(s)}
+                                            className={`w-11 h-11 flex flex-col items-center justify-center text-[12px] border font-mono transition-all duration-300 relative ${selectedSize === s ? (isWestern ? 'border-[#008b8b] bg-[#008b8b] text-white' : 'border-black bg-black text-white') : 'border-[#ccc] hover:border-black'} ${isRecommended ? 'ring-2 ring-[var(--gold)] ring-offset-2' : ''}`}
+                                        >
+                                            {s}
+                                            {isRecommended && (
+                                                <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[var(--gold)] text-white text-[7px] px-1.5 py-0.5 rounded whitespace-nowrap animate-bounce">
+                                                    ✦ RECOMMENDED
+                                                </span>
+                                            )}
+                                        </button>
+                                    );
+                                })}
                             </div>
 
                             <div className="flex flex-col gap-3">
