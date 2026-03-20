@@ -26,7 +26,7 @@ export async function getProfile(sessionId: string): Promise<UserProfile | null>
   try {
     const client = await clientPromise
     const db = client.db('asuka_couture')
-    const profile = await db.collection('user_profiles').findOne({ _id: sessionId })
+    const profile = await db.collection('user_profiles').findOne({ _id: sessionId as any })
     return profile as UserProfile | null
   } catch (err) {
     console.error('Failed to get profile:', err)
@@ -42,7 +42,7 @@ export async function updateProfile(sessionId: string, updates: Partial<UserProf
     const client = await clientPromise
     const db = client.db('asuka_couture')
     await db.collection('user_profiles').updateOne(
-      { _id: sessionId },
+      { _id: sessionId as any },
       { 
         $set: { ...updates, lastInteraction: new Date() },
         $setOnInsert: { _id: sessionId }
