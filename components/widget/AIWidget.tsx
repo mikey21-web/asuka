@@ -199,6 +199,19 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
     }
   }, [isReady, persona, msgs.length, city])
 
+  const startOver = useCallback(() => {
+    setMsgs([])
+    setSummary(null)
+    setImgPrompt(null)
+    setStreamingText(null)
+    greetingRef.current = false
+    try {
+      localStorage.removeItem(storageKey)
+    } catch {
+      // no-op for storage failures
+    }
+  }, [storageKey])
+
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTo({
@@ -279,12 +292,55 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
           }} style={{ marginTop: '8px', width: '100%', padding: '11px', background: '#a17a58', color: '#fff', border: 'none', fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '2px', textTransform: 'uppercase', cursor: 'pointer', borderRadius: '4px' }}>Finalize & Discuss (WhatsApp) →</button>
         </div>
       )}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', flexShrink: 0, padding: '10px 15px' }}>
-        {quickPrompts.map(q => (
-          <button type="button" key={q} onClick={() => send(q)} style={{ padding: '5px 10px', border: '1px solid #d4c4b0', fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '1px', color: '#a17a58', cursor: 'pointer', background: 'none', textTransform: 'uppercase', transition: 'all 0.2s', borderRadius: '3px' }}>
-            {q}
+      <div style={{ flexShrink: 0, padding: '10px 15px 8px', borderBottom: '1px solid #efe6dc' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '1.6px', color: '#9b836f', textTransform: 'uppercase' }}>Quick picks</span>
+          <button
+            type="button"
+            onClick={startOver}
+            style={{
+              padding: '5px 9px',
+              border: '1px solid #d4c4b0',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '8px',
+              letterSpacing: '1.2px',
+              color: '#8d6c4f',
+              background: '#fff',
+              textTransform: 'uppercase',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Start over
           </button>
-        ))}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '7px' }}>
+          {quickPrompts.map(q => (
+            <button
+              type="button"
+              key={q}
+              onClick={() => send(q)}
+              style={{
+                padding: '7px 8px',
+                border: '1px solid #d9cab8',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '8px',
+                letterSpacing: '0.9px',
+                color: '#9c7653',
+                cursor: 'pointer',
+                background: '#fffaf5',
+                textTransform: 'uppercase',
+                transition: 'all 0.2s',
+                borderRadius: '4px',
+                textAlign: 'center',
+                lineHeight: 1.4,
+                minHeight: '34px'
+              }}
+            >
+              {q}
+            </button>
+          ))}
+        </div>
       </div>
       <div ref={chatContainerRef} className="chat-scroll" style={{ flex: 1, overflowY: 'auto', padding: '15px', WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain', background: '#fff' }}>
         {!isReady ? (
@@ -544,7 +600,7 @@ export default function AIWidget({ isFloating = false }: { isFloating?: boolean 
       {open && (
         <>
           <div className="fixed inset-0 bg-black/40 z-[9998] sm:hidden animate-fadeIn" onClick={() => setOpen(false)} />
-          <div className="fixed bottom-0 left-0 right-0 sm:left-auto sm:right-7 sm:bottom-24 z-[9999] w-full sm:w-[350px] h-[85vh] sm:h-[560px] max-h-[85vh] flex flex-col animate-panelOpen shadow-[0_-10px_40px_rgba(0,0,0,0.15)] sm:shadow-2xl rounded-t-2xl sm:rounded-2xl overflow-hidden border border-[#e0d5c8] bg-white sm:mt-0">
+          <div className="fixed bottom-0 left-0 right-0 sm:left-auto sm:right-7 sm:bottom-24 z-[9999] w-full sm:w-[340px] h-[74vh] sm:h-[540px] max-h-[74vh] sm:max-h-[86vh] flex flex-col animate-panelOpen shadow-[0_-10px_40px_rgba(0,0,0,0.15)] sm:shadow-2xl rounded-t-2xl sm:rounded-2xl overflow-hidden border border-[#e0d5c8] bg-white sm:mt-0">
             {widgetContent}
           </div>
         </>
