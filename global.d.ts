@@ -1,35 +1,47 @@
 /* ═══════════════════════════════════════════════════════════
    ASUKA COUTURE — GLOBAL TYPE DEFINITIONS
-   Used to satisfy IDE and build environment when node_modules
-   are not locally available or indexed.
+   Used to satisfy IDE and compiler constraints across different environments.
    ═══════════════════════════════════════════════════════════ */
 
 declare namespace NodeJS {
   interface ProcessEnv {
-    MONGODB_URI: string;
-    GROQ_API_KEY: string;
-    N8N_LEADS_URL: string;
-    SHOP_DOMAIN?: string;
-    SHOP_ACCESS_TOKEN?: string;
-    UPSTASH_REDIS_REST_URL?: string;
-    UPSTASH_REDIS_REST_TOKEN?: string;
-    NEXT_PUBLIC_SITE_URL?: string;
+    readonly NODE_ENV: 'development' | 'production' | 'test';
+    readonly MONGODB_URI: string;
+    readonly SHOPIFY_STORE_URL: string;
+    readonly SHOPIFY_ADMIN_TOKEN: string;
+    readonly GROQ_API_KEY: string;
+    readonly N8N_SIZER_URL: string;
+    readonly N8N_LEADS_URL: string;
+    readonly BYTEZ_API_KEY: string;
   }
 }
 
-// Explicitly declare process for environments without @types/node indexed
-declare var process: {
-  env: NodeJS.ProcessEnv;
-};
+declare var process: NodeJS.Process;
 
 declare module 'next/server' {
-  export class NextRequest extends Request {
-    [key: string]: any;
+  export { NextRequest, NextResponse } from 'next/server';
+}
+
+declare module 'groq-sdk' {
+  export class Groq {
+    constructor(config: { apiKey: string | undefined });
+    chat: {
+      completions: {
+        create(params: any): Promise<any>;
+      };
+    };
   }
-  export class NextResponse extends Response {
-    static json(body: any, init?: ResponseInit): NextResponse;
-    static redirect(url: string | URL, status?: number): NextResponse;
-    static next(init?: ResponseInit): NextResponse;
-    [key: string]: any;
+}
+
+declare module 'mongodb' {
+  export class MongoClient {
+    constructor(uri: string, options?: any);
+    connect(): Promise<MongoClient>;
+    db(name?: string): any;
   }
+}
+
+declare module 'mongoose' {
+  const mongoose: any;
+  export default mongoose;
 }
