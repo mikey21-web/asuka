@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client'
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
@@ -409,6 +408,13 @@ export default function AIWidget({ isFloating = false }: { isFloating?: boolean 
   const pathname = usePathname()
   const [chatKey, setChatKey] = useState(0)
   const [unreadCount, setUnreadCount] = useState(0); 
+  const [city, setCity] = useState(() => {
+    if (typeof window === 'undefined') return ''
+    return localStorage.getItem('asuka_user_city') || ''
+  })
+
+  const hidePaths = ['/make-it-yourself', '/ai-stylist', '/stylist']
+  const shouldHide = isFloating && pathname && hidePaths.some(p => pathname.startsWith(p))
 
   useEffect(() => {
     if (open) setUnreadCount(0)
@@ -427,17 +433,9 @@ export default function AIWidget({ isFloating = false }: { isFloating?: boolean 
     return () => window.removeEventListener('openAsukaPanel', handler)
   }, [isFloating])
 
-  const hidePaths = ['/make-it-yourself', '/ai-stylist', '/stylist']
-  const shouldHide = isFloating && pathname && hidePaths.some(p => pathname.startsWith(p))
-
   if (shouldHide) {
     return null;
   }
-
-  const [city, setCity] = useState(() => {
-    if (typeof window === 'undefined') return ''
-    return localStorage.getItem('asuka_user_city') || ''
-  })
 
   const handleCityChange = (newCity: string) => {
     setCity(newCity)
