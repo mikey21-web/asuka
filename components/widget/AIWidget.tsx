@@ -158,6 +158,8 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
   const [summary, setSummary] = useState<string | null>(null)
   const [imgPrompt, setImgPrompt] = useState<string | null>(null)
   const [streamingText, setStreamingText] = useState<string | null>(null)
+  const [lastUserMessage, setLastUserMessage] = useState('')
+  const [statusNote, setStatusNote] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -200,17 +202,30 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
   }, [isReady, persona, msgs.length, city])
 
   const startOver = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      const confirmed = window.confirm('Start over and clear this conversation?')
+      if (!confirmed) return
+    }
     setMsgs([])
     setSummary(null)
     setImgPrompt(null)
     setStreamingText(null)
+    setLastUserMessage('')
+    setInput('')
     greetingRef.current = false
+    setStatusNote('Conversation reset')
     try {
       localStorage.removeItem(storageKey)
     } catch {
       // no-op for storage failures
     }
   }, [storageKey])
+
+  useEffect(() => {
+    if (!statusNote) return
+    const timer = setTimeout(() => setStatusNote(null), 1800)
+    return () => clearTimeout(timer)
+  }, [statusNote])
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -242,6 +257,7 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
 
   const send = useCallback(async (txt: string) => {
     if (!txt.trim() || loading) return
+    setLastUserMessage(txt.trim())
     const next: ChatMsg[] = [...msgs, { role: 'user', content: txt }]
     setMsgs(next); setInput(''); setLoading(true)
     try {
@@ -410,6 +426,26 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
           style={{ flex: 1, background: 'none', border: 'none', color: '#1a1410', fontFamily: 'var(--font-sans)', fontSize: '14px', fontWeight: 300, padding: '4px 0', outline: 'none' }}
         />
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {!!lastUserMessage && !loading && (
+            <button
+              type="button"
+              onClick={() => setInput(lastUserMessage)}
+              style={{
+                border: '1px solid #d4c4b0',
+                background: '#fffaf5',
+                color: '#8f6e4f',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '8px',
+                letterSpacing: '1px',
+                textTransform: 'uppercase',
+                borderRadius: '4px',
+                padding: '6px 7px',
+                cursor: 'pointer'
+              }}
+            >
+              Edit last
+            </button>
+          )}
           <VoiceInput onTranscription={send} isChatLoading={loading} />
           <button
             onClick={() => send(input)}
@@ -419,6 +455,13 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" /></svg>
           </button>
         </div>
+      </div>
+      <div style={{ minHeight: '18px', padding: '0 15px 8px', background: '#fff' }}>
+        {statusNote ? (
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '1.2px', color: '#8f6e4f', textTransform: 'uppercase' }}>{statusNote}</span>
+        ) : loading ? (
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '1.2px', color: '#a59483', textTransform: 'uppercase' }}>{persona === 'style' ? 'Ayaan is preparing your look...' : 'Asuka atelier is drafting your design...'}</span>
+        ) : null}
       </div>
     </div>
   )
