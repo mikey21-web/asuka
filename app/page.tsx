@@ -17,42 +17,6 @@ export default function Home() {
       <Header />
       <main style={{ background: 'white', minHeight: '100vh' }}>
 
-        {/* ═══ 1. AI-FIRST HERO ═══ */}
-        <section className="relative overflow-hidden bg-[#0e0b09] text-white">
-          <div className="absolute inset-0 opacity-40" style={{
-            background: 'radial-gradient(circle at 20% 20%, rgba(161,122,88,0.35), transparent 40%), radial-gradient(circle at 80% 0%, rgba(201,168,76,0.22), transparent 36%)'
-          }} />
-          <div className="relative max-w-[1240px] mx-auto px-6 md:px-10 py-20 md:py-28 grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-12 items-center">
-            <div>
-              <p className="font-mono text-[10px] tracking-[4px] uppercase text-[#d7be9b] mb-5">Asuka AI Stylist</p>
-              <h1 className="font-serif text-[38px] leading-[1.05] md:text-[64px] max-w-[760px] mb-6">
-                Dress Like It Was
-                <em className="font-normal text-[#d9ba91]"> Tailored For Tonight</em>
-              </h1>
-              <p className="font-sans text-[#ddd0c3] text-[16px] leading-relaxed max-w-[620px] mb-9">
-                Meet Ayaan, your personal couture stylist. Tell us your occasion, fit, and mood; get curated looks, live size guidance, and a direct handover to our atelier.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Link href="/ai-stylist" className="inline-flex items-center justify-center px-9 py-4 bg-[#a17a58] text-white no-underline font-mono text-[11px] tracking-[3px] uppercase hover:bg-[#b98a67] transition-colors">
-                  Launch AI Stylist
-                </Link>
-                <Link href="/make-it-yourself" className="inline-flex items-center justify-center px-9 py-4 border border-[#7e6854] text-[#e8dac7] no-underline font-mono text-[11px] tracking-[3px] uppercase hover:border-[#a17a58] hover:text-white transition-colors">
-                  Open MIY Atelier
-                </Link>
-              </div>
-            </div>
-            <div className="border border-[#3c3027] bg-[#17120f] p-6 md:p-8 rounded-sm shadow-[0_30px_70px_rgba(0,0,0,0.35)]">
-              <p className="font-mono text-[10px] tracking-[2px] uppercase text-[#b69878] mb-4">Live Flow</p>
-              <ol className="space-y-3 text-[14px] text-[#e5d7c6]">
-                <li>1. Share event, city, and style vibe</li>
-                <li>2. Get tailored looks from the synced catalog</li>
-                <li>3. Use AI sizing with easy fit inputs and optional photos</li>
-                <li>4. Move to WhatsApp with a ready brief</li>
-              </ol>
-            </div>
-          </div>
-        </section>
-
         {/* ═══ 2. SPLIT HERO COLLECTION ENTRY ═══ */}
         <section className="relative w-full flex flex-col md:flex-row overflow-hidden bg-black gap-0">
           {/* LEFT: ETHNIC WEAR */}
