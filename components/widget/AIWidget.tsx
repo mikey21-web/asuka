@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import VoiceInput from '../ai/VoiceInput'
-import { ASUKA_PRODUCTS } from '@/lib/groq'
+import { ASUKA_PRODUCTS } from '@/lib/products'
 
 /* ── TYPES ── */
 type Tab = 'style' | 'sizer' | 'miy'

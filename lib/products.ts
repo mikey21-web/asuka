@@ -15,6 +15,18 @@ export interface Product {
   celebrityName?: string
 }
 
+export interface SimplifiedProduct {
+  name: string
+  price: number
+  type: string
+  fabric: string
+  occasion: string[]
+  style: string[]
+  img: string
+  url: string
+  handle?: string
+}
+
 export const ASUKA_CATALOG: Product[] = [
   // Ethnic Collection
   {
@@ -237,4 +249,30 @@ export function getProductsByCollection(collection: 'ethnic' | 'western') {
 
 export function getProductsByCategory(category: string) {
   return ASUKA_CATALOG.filter(p => p.category === category)
+}
+
+// Real Asuka products catalogue for RAG context & UI matching
+export const ASUKA_PRODUCTS: SimplifiedProduct[] = ASUKA_CATALOG.map(p => ({
+  name: p.name,
+  price: p.price,
+  type: p.type,
+  fabric: p.fabric,
+  occasion: (p.occasion || []),
+  style: [p.style.toLowerCase()],
+  img: p.img,
+  url: p.url,
+  handle: p.slug
+}))
+
+/**
+ * Parses assistant reply for product names in bold **[Product Name]** 
+ * and returns the full product objects for the UI grid.
+ */
+export function matchProducts(text: string) {
+  const matches = text.match(/\*\*\[(.*?)\]\*\*/g) || []
+  const productNames = matches.map(m => m.replace(/\*\*\[|\]\*\*/g, '').trim())
+  
+  return ASUKA_PRODUCTS.filter(p => 
+    productNames.some(name => p.name.toLowerCase().includes(name.toLowerCase()))
+  ).slice(0, 4)
 }

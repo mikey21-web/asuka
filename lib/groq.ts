@@ -73,19 +73,8 @@ export async function groqChatWithFallback(
   }
 }
 
-import { ASUKA_CATALOG } from './products'
-
-// Real Asuka products catalogue for RAG context
-export const ASUKA_PRODUCTS = ASUKA_CATALOG.map(p => ({
-  name: p.name,
-  price: p.price,
-  type: p.type,
-  fabric: p.fabric,
-  occasion: p.occasion,
-  style: [p.style.toLowerCase()],
-  img: p.img,
-  url: p.url
-}))
+// Import simplified product helpers from products.ts
+import { ASUKA_PRODUCTS } from './products'
 
 export function buildProductContext(): string {
   return ASUKA_PRODUCTS.map(p =>
@@ -93,18 +82,7 @@ export function buildProductContext(): string {
   ).join('\n')
 }
 
-/**
- * Parses assistant reply for product names in bold **[Product Name]** 
- * and returns the full product objects for the UI grid.
- */
-export function matchProducts(text: string) {
-  const matches = text.match(/\*\*\[(.*?)\]\*\*/g) || []
-  const productNames = matches.map(m => m.replace(/\*\*\[|\]\*\*/g, '').trim())
-  
-  return ASUKA_PRODUCTS.filter(p => 
-    productNames.some(name => p.name.toLowerCase().includes(name.toLowerCase()))
-  ).slice(0, 4)
-}
+export { ASUKA_PRODUCTS }
 
 export const AYAAN_SYSTEM_PROMPT = `You are Ayaan, personal stylist for Asuka Couture — India's finest luxury menswear brand with 35 years of heritage. Stores in Hyderabad, Mumbai, and Ahmedabad.
 
