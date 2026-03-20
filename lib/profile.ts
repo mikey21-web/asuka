@@ -1,9 +1,7 @@
 import clientPromise from './mongodb'
 import { Groq } from 'groq-sdk'
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY
-})
+
 
 export interface UserProfile {
   _id: string;           // session_id or user_id
@@ -87,6 +85,10 @@ RESPONSE FORMAT (JSON ONLY):
   "budgetRange": "...",
   "conversationSummary": "..."
 }`
+
+  const groq = new Groq({
+    apiKey: process.env.GROQ_API_KEY
+  })
 
   try {
     const completion = await groq.chat.completions.create({

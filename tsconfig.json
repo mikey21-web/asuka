@@ -26,7 +26,8 @@
         "./*"
       ]
     },
-    "types": ["node"]
+    "types": ["node"],
+    "typeRoots": ["./node_modules/@types"]
   },
   "include": [
     "global.d.ts",
