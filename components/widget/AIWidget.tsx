@@ -342,7 +342,7 @@ function ChatPanel({ endpoint, persona, quickPrompts, systemHeight, showPreview 
           ))}
         </div>
       </div>
-      <div ref={chatContainerRef} className="chat-scroll" style={{ flex: 1, overflowY: 'auto', padding: '15px', WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain', background: '#fff' }}>
+      <div ref={chatContainerRef} className="chat-scroll" style={{ flex: 1, overflowY: 'auto', padding: '6px 15px 12px', WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain', background: '#fff' }}>
         {!isReady ? (
           <div className="animate-pulse" style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '10px 0' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -508,7 +508,6 @@ export default function AIWidget({ isFloating = false }: { isFloating?: boolean 
               AI Personal Stylist
             </span>
             <div className="flex items-center gap-2 mt-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
               <span className="text-[8px] uppercase tracking-widest text-white/40">Expert Online</span>
             </div>
           </div>
