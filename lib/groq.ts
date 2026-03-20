@@ -73,6 +73,11 @@ export async function groqChatWithFallback(
   }
 }
 
+const GROQ_API_KEY = process.env.GROQ_API_KEY || ''
+if (!GROQ_API_KEY && process.env.NODE_ENV === 'production') {
+  console.warn('⚠️ GROQ_API_KEY is missing. AI features will fail at runtime.')
+}
+
 // Import simplified product helpers from products.ts
 import { ASUKA_PRODUCTS } from './products'
 
