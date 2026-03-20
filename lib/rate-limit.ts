@@ -76,10 +76,10 @@ export function checkRateLimit(ip: string | null): { success: boolean, remaining
 if (typeof setInterval !== 'undefined') {
   setInterval(() => {
     const now = Date.now();
-    for (const [ip, tracker] of ipTracker.entries()) {
+    ipTracker.forEach((tracker, ip) => {
       if (now > tracker.resetTime) {
         ipTracker.delete(ip);
       }
-    }
+    });
   }, 5 * 60 * 1000);
 }
