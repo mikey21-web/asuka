@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
 import { checkRateLimit } from '@/lib/rate-limit';
 
 // This is a simulation of a lead database connection
